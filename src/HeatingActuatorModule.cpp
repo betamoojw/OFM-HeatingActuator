@@ -40,11 +40,11 @@ void HeatingActuatorModule::processInputKo(GroupObject &iKo)
 
 void HeatingActuatorModule::setup(bool configured)
 {
-#ifdef AB_HTA_I2C_WIRE
-    AB_HTA_I2C_WIRE.setSDA(AB_HTA_I2C_SDA);
-    AB_HTA_I2C_WIRE.setSCL(AB_HTA_I2C_SCL);
-    AB_HTA_I2C_WIRE.begin();
-    AB_HTA_I2C_WIRE.setClock(400000);
+#ifdef OPENKNX_GPIO_WIRE
+    OPENKNX_GPIO_WIRE.setSDA(OPENKNX_GPIO_SDA);
+    OPENKNX_GPIO_WIRE.setSCL(OPENKNX_GPIO_SCL);
+    OPENKNX_GPIO_WIRE.begin();
+    OPENKNX_GPIO_WIRE.setClock(OPENKNX_GPIO_CLOCK);
 
     if (ina.begin())
     {
