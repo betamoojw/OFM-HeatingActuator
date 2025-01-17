@@ -19,6 +19,11 @@
             "owner": "robtillaart",
             "name": "TCA9555",
             "version": "^0.3.2"
+        },
+        {
+            "owner": "robtillaart",
+            "name": "INA219",
+            "version": "^0.4.0"
         }
     ]
 }

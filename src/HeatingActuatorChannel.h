@@ -1,11 +1,6 @@
 #pragma once
 #include "OpenKNX.h"
 
-#define RELAY_GPIO_SET_ON    OPENKNX_SWA_SET_ACTIVE_ON == HIGH ? HIGH : LOW
-#define RELAY_GPIO_SET_OFF   OPENKNX_SWA_SET_ACTIVE_ON == HIGH ? LOW : HIGH
-#define RELAY_GPIO_RESET_ON  OPENKNX_SWA_RESET_ACTIVE_ON == HIGH ? HIGH : LOW
-#define RELAY_GPIO_RESET_OFF OPENKNX_SWA_RESET_ACTIVE_ON == HIGH ? LOW : HIGH
-
 class HeatingActuatorChannel : public OpenKNX::Channel
 {
   private:
@@ -30,6 +25,8 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     void setup(bool configured);
     void loop();
 
+    void runMotor();
+    void stopMotor();
     void doSwitch(bool active, bool syncSwitch = true);
     bool isRelayActive();
     void savePower();
