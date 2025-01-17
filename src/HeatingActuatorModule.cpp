@@ -40,12 +40,15 @@ void HeatingActuatorModule::processInputKo(GroupObject &iKo)
 
 void HeatingActuatorModule::setup(bool configured)
 {
-#ifdef OPENKNX_GPIO_WIRE
-    OPENKNX_GPIO_WIRE.setSDA(OPENKNX_GPIO_SDA);
-    OPENKNX_GPIO_WIRE.setSCL(OPENKNX_GPIO_SCL);
-    OPENKNX_GPIO_WIRE.begin();
-    OPENKNX_GPIO_WIRE.setClock(OPENKNX_GPIO_CLOCK);
+    for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
+    {
+        openknxGPIOModule.pinMode(0x0100 + i, OUTPUT);
+        openknxGPIOModule.digitalWrite(0x0100 + i, LOW);
 
+        openknxGPIOModule.pinMode(0x0200 + i, INPUT);
+    }
+
+#ifdef OPENKNX_GPIO_WIRE
     if (ina.begin())
     {
         logDebugP("INA219 setup done with address %u", ina.getAddress());
@@ -70,22 +73,6 @@ void HeatingActuatorModule::setup(bool configured)
         logDebugP("INA219 not found at address %u", ina.getAddress());
 #endif
 
-// #ifdef OPENKNX_SWA_IO_TCA_ADDR
-//     if (tca.begin())
-//     {
-//         tca.pinMode8(0, 0x00);
-//         tca.pinMode8(1, 0xFF);
-//         tca.setPolarity8(1, 0xFF);
-
-//         for (uint8_t i = 0; i < 8; i++)
-//             tca.write1(i, LOW);
-
-//         logDebugP("TCA9555 setup done with address %u", tca.getAddress());
-//     }
-//     else
-//         logDebugP("TCA9555 not found at address %u", tca.getAddress());
-// #endif
-
     pinMode(OPENKNX_HTA_MOT_PWR_PIN, OUTPUT);
     digitalWrite(OPENKNX_HTA_MOT_PWR_PIN, MOT_PWR_OFF);
 
@@ -98,15 +85,11 @@ void HeatingActuatorModule::setup(bool configured)
     pinMode(OPENKNX_HTA_MOT_LOW2_PIN, OUTPUT);
     digitalWrite(OPENKNX_HTA_MOT_LOW2_PIN, MOT_LOW2_OFF);
 
-    // if (configured)
-    // {
-        //for (uint8_t i = 0; i < MIN(ParamSWA_VisibleChannels, OPENKNX_SWA_CHANNEL_COUNT); i++)
-        for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
-        {
-            channel[i] = new HeatingActuatorChannel(i);
-            channel[i]->setup(configured);
-        }
-    // }
+    for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
+    {
+        channel[i] = new HeatingActuatorChannel(i);
+        channel[i]->setup(configured);
+    }
 }
 
 uint32_t testTimer = 0;
@@ -134,6 +117,12 @@ void HeatingActuatorModule::loop()
         testTimer = delayTimerInit();
         currentSum = 0;
         currentCount = 0;
+    }
+
+    for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
+    {
+        if (openknxGPIOModule.digitalRead(0x0200 + i) == LOW)
+            openknxGPIOModule.digitalWrite(0x0100 + i, HIGH);
     }
 
 // #ifdef OPENKNX_SWA_IO_TCA_ADDR

@@ -1,13 +1,10 @@
 #pragma once
 #include "OpenKNX.h"
+#include "GPIOModule.h"
 #include "HeatingActuatorChannel.h"
 #include "hardware.h"
 #include "knxprod.h"
 #include "INA219.h"
-
-#ifdef AB_HTA_OUT_TCA1_ADDR
-  #include "TCA9555.h"
-#endif
 
 #define OPENKNX_SWA_FLASH_VERSION 0
 #define OPENKNX_SWA_FLASH_MAGIC_WORD 3441922009
@@ -56,14 +53,10 @@ class HeatingActuatorModule : public OpenKNX::Module
 
   private:
     HeatingActuatorChannel *channel[SWA_ChannelCount];
-    uint32_t chSwitchLastTrigger[8] = {};
-
-#ifdef AB_HTA_OUT_TCA1_ADDR
-    TCA9555 tca = TCA9555(AB_HTA_OUT_TCA1_ADDR, &AB_HTA_I2C_WIRE);
-#endif
+    uint32_t chSwitchLastTrigger[12] = {};
 
 #ifdef AB_HTA_CUR_INA_ADDR
-    INA219 ina = INA219(AB_HTA_CUR_INA_ADDR, &AB_HTA_I2C_WIRE);
+    INA219 ina = INA219(AB_HTA_CUR_INA_ADDR, &OPENKNX_GPIO_WIRE);
 #endif
 };
 
