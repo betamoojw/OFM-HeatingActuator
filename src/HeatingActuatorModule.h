@@ -11,7 +11,7 @@
 
 #define CH_SWITCH_DEBOUNCE 250
 
-const uint8_t MOTOR_PINS[OPENKNX_HTA_GPIO_COUNT] = {OPENKNX_HTA_GPIO_PINS};
+const uint8_t MOTOR_PINS[OPENKNX_HTA_MOT_COUNT] = {OPENKNX_HTA_MOT_PINS};
 
 #define MOT_PWR_ON    OPENKNX_HTA_MOT_PWR_PIN_ACTIVE_ON == HIGH ? HIGH : LOW
 #define MOT_PWR_OFF   OPENKNX_HTA_MOT_PWR_PIN_ACTIVE_ON == HIGH ? LOW : HIGH
@@ -23,8 +23,8 @@ const uint8_t MOTOR_PINS[OPENKNX_HTA_GPIO_COUNT] = {OPENKNX_HTA_GPIO_PINS};
 #define MOT_LOW1_OFF  OPENKNX_HTA_MOT_LOW1_PIN_ACTIVE_ON == HIGH ? LOW : HIGH
 #define MOT_LOW2_ON   OPENKNX_HTA_MOT_LOW2_PIN_ACTIVE_ON == HIGH ? HIGH : LOW
 #define MOT_LOW2_OFF  OPENKNX_HTA_MOT_LOW2_PIN_ACTIVE_ON == HIGH ? LOW : HIGH
-#define MOT_ON        OPENKNX_HTA_ONLEVEL == HIGH ? HIGH : LOW
-#define MOT_OFF       OPENKNX_HTA_ONLEVEL == HIGH ? LOW : HIGH
+#define MOT_ON        OPENKNX_HTA_ACTIVE_ON == HIGH ? HIGH : LOW
+#define MOT_OFF       OPENKNX_HTA_ACTIVE_ON == HIGH ? LOW : HIGH
 
 class HeatingActuatorModule : public OpenKNX::Module
 {
@@ -51,11 +51,19 @@ class HeatingActuatorModule : public OpenKNX::Module
     const std::string version() override;
 
   private:
-    HeatingActuatorChannel *channel[OPENKNX_HTA_GPIO_COUNT];
-    uint32_t chSwitchLastTrigger[OPENKNX_HTA_GPIO_COUNT] = {};
+    HeatingActuatorChannel *channel[OPENKNX_HTA_MOT_COUNT];
+    uint32_t chSwitchLastTrigger[OPENKNX_HTA_MOT_COUNT] = {};
 
-#ifdef AB_HTA_CUR_INA_ADDR
-    INA219 ina = INA219(AB_HTA_CUR_INA_ADDR, &OPENKNX_GPIO_WIRE);
+    bool _motorRunning = false;
+    bool _motorRunningCcw = false;
+    float _currentAvg = 0;
+    float _currentAvgLast = 0;
+    uint32_t _currentCount = 0;
+
+    uint32_t _debugOutputTimer = 0;
+
+#ifdef OPENKNX_HTA_CURRENT_INA_ADDR
+    INA219 ina = INA219(OPENKNX_HTA_CURRENT_INA_ADDR, &OPENKNX_GPIO_WIRE);
 #endif
 };
 

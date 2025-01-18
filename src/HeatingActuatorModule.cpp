@@ -24,23 +24,23 @@ const std::string HeatingActuatorModule::version()
 
 void HeatingActuatorModule::processInputKo(GroupObject &iKo)
 {
-    if (iKo.asap() != SWA_KoCentralFunction &&
-        (iKo.asap() < SWA_KoBlockOffset ||
-         iKo.asap() > SWA_KoBlockOffset + ParamSWA_VisibleChannels * SWA_KoBlockSize - 1))
-        return;
+    // if (iKo.asap() != SWA_KoCentralFunction &&
+    //     (iKo.asap() < SWA_KoBlockOffset ||
+    //      iKo.asap() > SWA_KoBlockOffset + ParamSWA_VisibleChannels * SWA_KoBlockSize - 1))
+    //     return;
 
-    logDebugP("processInputKo");
-    logIndentUp();
+    // logDebugP("processInputKo");
+    // logIndentUp();
 
-    for (uint8_t i = 0; i < MIN(ParamSWA_VisibleChannels, OPENKNX_HTA_GPIO_COUNT); i++)
-        channel[i]->processInputKo(iKo);
+    // for (uint8_t i = 0; i < MIN(ParamSWA_VisibleChannels, OPENKNX_HTA_MOT_COUNT); i++)
+    //     channel[i]->processInputKo(iKo);
 
-    logIndentDown();
+    // logIndentDown();
 }
 
 void HeatingActuatorModule::setup(bool configured)
 {
-    for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
+    for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
     {
         openknxGPIOModule.pinMode(0x0100 + i, OUTPUT);
         openknxGPIOModule.digitalWrite(0x0100 + i, LOW);
@@ -85,41 +85,59 @@ void HeatingActuatorModule::setup(bool configured)
     pinMode(OPENKNX_HTA_MOT_LOW2_PIN, OUTPUT);
     digitalWrite(OPENKNX_HTA_MOT_LOW2_PIN, MOT_LOW2_OFF);
 
-    for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
+    for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
     {
         channel[i] = new HeatingActuatorChannel(i);
         channel[i]->setup(configured);
     }
 }
 
-uint32_t testTimer = 0;
-float currentSum = 0;
-uint32_t currentCount = 0;
-
 void HeatingActuatorModule::loop()
 {
     //for (uint8_t i = 0; i < MIN(ParamSWA_VisibleChannels, OPENKNX_SWA_CHANNEL_COUNT); i++)
-    for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
+    for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
         channel[i]->loop();
 
-    currentSum += ina.getCurrent_mA();
-    currentCount++;
-    if (delayCheck(testTimer, 1000)) 
+    if (_motorRunning)
     {
-        // logDebugP("getBusVoltage: %.2f", ina.getBusVoltage());
-        // logDebugP("getShuntVoltage_mV: %.2f", ina.getShuntVoltage_mV());
-        // logDebugP("getCurrent_mA: %.2f", ina.getCurrent_mA());
-        // logDebugP("getPower_mW: %.2f", ina.getPower_mW());
-        // logDebugP("getMathOverflowFlag: %d", ina.getMathOverflowFlag());
-        // logDebugP("getConversionFlag: %d", ina.getConversionFlag());
+        _currentAvg -= _currentAvg / 10;
+        _currentAvg += ina.getCurrent_mA() / 10;
+        _currentCount++;
 
-        logDebugP("current: %.2f", currentSum / currentCount);
-        testTimer = delayTimerInit();
-        currentSum = 0;
-        currentCount = 0;
+        if (_currentCount >= 10) 
+        {
+            if (_currentAvg > OPENKNX_HTA_CURRENT_MOT_MAX_LIMIT)
+            {
+                logDebugP("STOP MAX: current: %.2f", _currentAvg);
+                stopMotor();
+            }
+
+            if (_currentCount % 10 == 0)
+            {
+                if (delayCheck(_debugOutputTimer, 1000)) 
+                {
+                    logDebugP("current: %.2f, last: %.2f", _currentAvg, _currentAvgLast);
+                    _debugOutputTimer = delayTimerInit();
+                }
+
+                if (_currentCount >= 100 &&
+                    _currentAvgLast > 0)
+                {
+                    if (_currentAvg > _currentAvgLast &&
+                        ((!_motorRunningCcw && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CW_LIMIT)) ||
+                        (_motorRunningCcw && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CCW_LIMIT))))
+                    {
+                        logDebugP("STOP: current: %.2f, last: %.2f, limit: %.2f", _currentAvg, _currentAvgLast, _motorRunningCcw ? OPENKNX_HTA_CURRENT_MOT_CCW_LIMIT : OPENKNX_HTA_CURRENT_MOT_CW_LIMIT);
+                        stopMotor();
+                    }
+                }
+
+                _currentAvgLast = _currentAvg;
+            }
+        }
     }
 
-    for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
+    for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
     {
         if (openknxGPIOModule.digitalRead(0x0200 + i) == LOW)
             openknxGPIOModule.digitalWrite(0x0100 + i, HIGH);
@@ -146,6 +164,8 @@ void HeatingActuatorModule::runMotor(uint8_t channelIndex, bool ccw)
 {
     stopMotor();
 
+    logDebugP("Run motor index %u, ccw: %u", channelIndex, ccw);
+
     if (!ccw)
     {
         digitalWrite(OPENKNX_HTA_MOT_HIGH1_PIN, MOT_HIGH1_ON);
@@ -163,13 +183,23 @@ void HeatingActuatorModule::runMotor(uint8_t channelIndex, bool ccw)
 
     channel[channelIndex]->runMotor();
     digitalWrite(OPENKNX_HTA_MOT_PWR_PIN, MOT_PWR_ON);
+
+    _currentCount = 0;
+    _currentAvg = 0;
+    _currentAvgLast = 0;
+    _motorRunningCcw = ccw;
+    _motorRunning = true;
 }
 
 void HeatingActuatorModule::stopMotor()
 {
+    logDebugP("Stop motor");
+
+    _motorRunning = false;
+
     digitalWrite(OPENKNX_HTA_MOT_PWR_PIN, MOT_PWR_OFF);
 
-    for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
+    for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
         channel[i]->stopMotor();
 }
 
@@ -270,7 +300,7 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
         openknx.console.writeDiagenoseKo("");
         openknx.console.writeDiagenoseKo("-> mot NN ccw");
         openknx.console.writeDiagenoseKo("");
-        openknx.console.writeDiagenoseKo("-> mot off");
+        openknx.console.writeDiagenoseKo("-> mot stop");
         openknx.console.writeDiagenoseKo("");
     }
     else if (cmd.length() > 8 && cmd.substr(4, 3) == "mot")
@@ -287,7 +317,7 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
             runMotor(channelIndex, true);
             result = true;
         }
-        if (cmd.length() == 11 && cmd.substr(8, 3) == "off")
+        if (cmd.length() == 12 && cmd.substr(8, 4) == "stop")
         {
             stopMotor();
             result = true;
