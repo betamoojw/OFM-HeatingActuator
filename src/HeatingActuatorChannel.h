@@ -11,10 +11,6 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     uint32_t turnOnDelayTimer = 0;
     uint32_t turnOffDelayTimer = 0;
 
-    void doSwitchInternal(bool active, bool syncSwitch = true);
-    void processSwitchInput(bool newActive);
-    void relaisOff();
-
   protected:
 
   public:
@@ -27,8 +23,6 @@ class HeatingActuatorChannel : public OpenKNX::Channel
 
     void runMotor();
     void stopMotor();
-    void doSwitch(bool active, bool syncSwitch = true);
-    bool isRelayActive();
     void savePower();
     bool restorePower();
 };

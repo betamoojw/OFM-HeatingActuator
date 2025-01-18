@@ -38,7 +38,6 @@ class HeatingActuatorModule : public OpenKNX::Module
 
     void runMotor(uint8_t channelIndex, bool ccw);
     void stopMotor();
-    void doSwitchChannel(uint8_t channelIndex, bool active, bool syncSwitch = true);
 
     void writeFlash() override;
     void readFlash(const uint8_t* data, const uint16_t size) override;
@@ -52,8 +51,8 @@ class HeatingActuatorModule : public OpenKNX::Module
     const std::string version() override;
 
   private:
-    HeatingActuatorChannel *channel[SWA_ChannelCount];
-    uint32_t chSwitchLastTrigger[12] = {};
+    HeatingActuatorChannel *channel[OPENKNX_HTA_GPIO_COUNT];
+    uint32_t chSwitchLastTrigger[OPENKNX_HTA_GPIO_COUNT] = {};
 
 #ifdef AB_HTA_CUR_INA_ADDR
     INA219 ina = INA219(AB_HTA_CUR_INA_ADDR, &OPENKNX_GPIO_WIRE);

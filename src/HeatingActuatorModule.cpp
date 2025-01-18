@@ -127,7 +127,7 @@ void HeatingActuatorModule::loop()
 
 // #ifdef OPENKNX_SWA_IO_TCA_ADDR
 //     uint8_t channelIndex = 0;
-//     for (uint8_t i = 0; i < 8; i++)
+//     for (uint8_t i = 0; i < MIN(ParamSWA_VisibleChannels, OPENKNX_SWA_CHANNEL_COUNT); i++)
 //     {
 //         channelIndex = 7 - i;
 //         if (delayCheck(chSwitchLastTrigger[channelIndex], CH_SWITCH_DEBOUNCE) && tca.read1(i + 8))
@@ -137,7 +137,7 @@ void HeatingActuatorModule::loop()
 //         }
 //     }
 
-//     for (uint8_t i = 0; i < 8; i++)
+//     for (uint8_t i = 0; i < MIN(ParamSWA_VisibleChannels, OPENKNX_SWA_CHANNEL_COUNT); i++)
 //         tca.write1(i, channel[i]->isRelayActive());
 // #endif
 }
@@ -171,11 +171,6 @@ void HeatingActuatorModule::stopMotor()
 
     for (uint8_t i = 0; i < OPENKNX_HTA_GPIO_COUNT; i++)
         channel[i]->stopMotor();
-}
-
-void HeatingActuatorModule::doSwitchChannel(uint8_t channelIndex, bool active, bool syncSwitch)
-{
-    channel[channelIndex]->doSwitch(active, syncSwitch);
 }
 
 void HeatingActuatorModule::readFlash(const uint8_t *data, const uint16_t size)
