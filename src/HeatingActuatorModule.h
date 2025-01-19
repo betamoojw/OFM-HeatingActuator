@@ -5,9 +5,10 @@
 #include "hardware.h"
 #include "knxprod.h"
 #include "INA219.h"
+#include <queue>
 
 #define OPENKNX_HTA_FLASH_VERSION 0
-#define OPENKNX_HTA_FLASH_MAGIC_WORD 3441922009
+#define OPENKNX_HTA_FLASH_MAGIC_WORD 2778334631
 
 #define CH_SWITCH_DEBOUNCE 250
 
@@ -32,7 +33,7 @@ class HeatingActuatorModule : public OpenKNX::Module
     HeatingActuatorModule();
     ~HeatingActuatorModule();
 
-    void processInputKo(GroupObject &iKo);
+    void processInputKo(GroupObject &ko);
     void setup(bool configured);
     void loop();
 
@@ -52,8 +53,8 @@ class HeatingActuatorModule : public OpenKNX::Module
     const std::string version() override;
 
   private:
-    HeatingActuatorChannel *channel[OPENKNX_HTA_MOT_COUNT];
-    uint32_t chSwitchLastTrigger[OPENKNX_HTA_MOT_COUNT] = {};
+    HeatingActuatorChannel *_channel[OPENKNX_HTA_MOT_COUNT];
+    uint32_t _chSwitchLastTrigger[OPENKNX_HTA_MOT_COUNT] = {};
 
     bool _motorRunning = false;
     bool _motorRunningCcw = false;

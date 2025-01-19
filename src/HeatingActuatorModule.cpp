@@ -22,18 +22,18 @@ const std::string HeatingActuatorModule::version()
     return MODULE_HeatingActuator_Version;
 }
 
-void HeatingActuatorModule::processInputKo(GroupObject &iKo)
+void HeatingActuatorModule::processInputKo(GroupObject &ko)
 {
-    // if (iKo.asap() != HTA_KoCentralFunction &&
-    //     (iKo.asap() < HTA_KoBlockOffset ||
-    //      iKo.asap() > HTA_KoBlockOffset + ParamHTA_VisibleChannels * HTA_KoBlockSize - 1))
+    // if (ko.asap() != HTA_KoCentralFunction &&
+    //     (ko.asap() < HTA_KoBlockOffset ||
+    //      ko.asap() > HTA_KoBlockOffset + ParamHTA_VisibleChannels * HTA_KoBlockSize - 1))
     //     return;
 
     // logDebugP("processInputKo");
     // logIndentUp();
 
     // for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_MOT_COUNT); i++)
-    //     channel[i]->processInputKo(iKo);
+    //     _channel[i]->processInputKo(ko);
 
     // logIndentDown();
 }
@@ -88,8 +88,8 @@ void HeatingActuatorModule::setup(bool configured)
 
     for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
     {
-        channel[i] = new HeatingActuatorChannel(i);
-        channel[i]->setup(configured);
+        _channel[i] = new HeatingActuatorChannel(i);
+        _channel[i]->setup(configured);
     }
 }
 
@@ -97,7 +97,7 @@ void HeatingActuatorModule::loop()
 {
     //for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_CHANNEL_COUNT); i++)
     for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
-        channel[i]->loop();
+        _channel[i]->loop();
 
     if (_motorRunning)
     {
@@ -149,15 +149,15 @@ void HeatingActuatorModule::loop()
 //     for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_CHANNEL_COUNT); i++)
 //     {
 //         channelIndex = 7 - i;
-//         if (delayCheck(chSwitchLastTrigger[channelIndex], CH_SWITCH_DEBOUNCE) && tca.read1(i + 8))
+//         if (delayCheck(_chSwitchLastTrigger[channelIndex], CH_SWITCH_DEBOUNCE) && tca.read1(i + 8))
 //         {
-//             chSwitchLastTrigger[channelIndex] = delayTimerInit();
+//             _chSwitchLastTrigger[channelIndex] = delayTimerInit();
 //             channel[channelIndex]->doSwitch(!channel[channelIndex]->isRelayActive());
 //         }
 //     }
 
 //     for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_CHANNEL_COUNT); i++)
-//         tca.write1(i, channel[i]->isRelayActive());
+//         tca.write1(i, _channel[i]->isRelayActive());
 // #endif
 }
 
@@ -182,7 +182,7 @@ void HeatingActuatorModule::runMotor(uint8_t channelIndex, bool ccw)
         digitalWrite(OPENKNX_HTA_MOT_LOW2_PIN, MOT_LOW2_OFF);
     }
 
-    channel[channelIndex]->runMotor();
+    _channel[channelIndex]->runMotor();
     digitalWrite(OPENKNX_HTA_MOT_PWR_PIN, MOT_PWR_ON);
 
     _currentCount = 0;
@@ -201,7 +201,7 @@ void HeatingActuatorModule::stopMotor()
     digitalWrite(OPENKNX_HTA_MOT_PWR_PIN, MOT_PWR_OFF);
 
     for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
-        channel[i]->stopMotor();
+        _channel[i]->stopMotor();
 }
 
 void HeatingActuatorModule::readFlash(const uint8_t *data, const uint16_t size)
@@ -235,7 +235,7 @@ void HeatingActuatorModule::readFlash(const uint8_t *data, const uint16_t size)
     //     if (bitIndex == 0)
     //         byteValue = openknx.flash.readByte();
 
-    //     channel[i]->doSwitch(bitRead(byteValue, bitIndex), false);
+    //     _channel[i]->doSwitch(bitRead(byteValue, bitIndex), false);
     // }
     
     // logIndentDown();
@@ -260,7 +260,7 @@ void HeatingActuatorModule::writeFlash()
     //         byteValue = 0;
     //     }
 
-    //     bitWrite(byteValue, bitIndex, channel[i]->isRelayActive());
+    //     bitWrite(byteValue, bitIndex, _channel[i]->isRelayActive());
     // }
     // openknx.flash.writeByte(byteValue);
 
@@ -276,14 +276,14 @@ uint16_t HeatingActuatorModule::flashSize()
 void HeatingActuatorModule::savePower()
 {
     // for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_CHANNEL_COUNT); i++)
-    //     channel[i]->savePower();
+    //     _channel[i]->savePower();
 }
 
 bool HeatingActuatorModule::restorePower()
 {
     bool success = true;
     // for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_CHANNEL_COUNT); i++)
-    //     success &= channel[i]->restorePower();
+    //     success &= _channel[i]->restorePower();
     
     return success;
 }

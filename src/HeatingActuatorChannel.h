@@ -3,21 +3,11 @@
 
 class HeatingActuatorChannel : public OpenKNX::Channel
 {
-  private:
-    const std::string name() override;
-    bool statusDuringLock;
-    uint32_t statusCyclicSendTimer = 0;
-    uint32_t relayBistableImpulsTimer = 0;
-    uint32_t turnOnDelayTimer = 0;
-    uint32_t turnOffDelayTimer = 0;
-
-  protected:
-
   public:
-    HeatingActuatorChannel(uint8_t iChannelNumber);
+    HeatingActuatorChannel(uint8_t channelNumber);
     ~HeatingActuatorChannel();
 
-    void processInputKo(GroupObject &iKo);
+    void processInputKo(GroupObject &ko);
     void setup(bool configured);
     void loop();
 
@@ -25,4 +15,11 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     void stopMotor();
     void savePower();
     bool restorePower();
+
+  protected:
+
+  private:
+    const std::string name() override;
+    bool _statusDuringLock;
+    uint32_t _statusCyclicSendTimer = 0;
 };

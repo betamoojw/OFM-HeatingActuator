@@ -1,14 +1,14 @@
 #include "HeatingActuatorChannel.h"
 #include "HeatingActuatorModule.h"
 
-HeatingActuatorChannel::HeatingActuatorChannel(uint8_t iChannelNumber)
+HeatingActuatorChannel::HeatingActuatorChannel(uint8_t channelNumber)
 {
-    _channelIndex = iChannelNumber;
+    _channelIndex = channelNumber;
 }
 
 HeatingActuatorChannel::~HeatingActuatorChannel() {}
 
-void HeatingActuatorChannel::processInputKo(GroupObject &iKo)
+void HeatingActuatorChannel::processInputKo(GroupObject &ko)
 {
 }
 
@@ -42,7 +42,7 @@ void HeatingActuatorChannel::setup(bool configured)
     // if (configured)
     // {
     //     if (ParamHTA_ChStatusCyclicTimeMS > 0)
-    //         statusCyclicSendTimer = delayTimerInit();
+    //         _statusCyclicSendTimer = delayTimerInit();
     // }
 }
 
