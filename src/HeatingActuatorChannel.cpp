@@ -41,21 +41,21 @@ void HeatingActuatorChannel::setup(bool configured)
 
     // if (configured)
     // {
-    //     if (ParamSWA_ChStatusCyclicTimeMS > 0)
+    //     if (ParamHTA_ChStatusCyclicTimeMS > 0)
     //         statusCyclicSendTimer = delayTimerInit();
     // }
 }
 
 void HeatingActuatorChannel::savePower()
 {
-    // if (ParamSWA_ChBehaviorPowerLoss > 0)
-    //     doSwitchInternal(ParamSWA_ChBehaviorPowerLoss == 2);
+    // if (ParamHTA_ChBehaviorPowerLoss > 0)
+    //     doSwitchInternal(ParamHTA_ChBehaviorPowerLoss == 2);
 }
 
 bool HeatingActuatorChannel::restorePower()
 {
-    // if (ParamSWA_ChBehaviorPowerRegain > 0)
-    //     doSwitchInternal(ParamSWA_ChBehaviorPowerRegain == 2);
+    // if (ParamHTA_ChBehaviorPowerRegain > 0)
+    //     doSwitchInternal(ParamHTA_ChBehaviorPowerRegain == 2);
 
     return true;
 }
