@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <?xml-model href="../../../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
-  <op:config name="%SWA_NumChannelsDefault%" value="%N%" />
+  <op:config name="%HTA_NumChannelsDefault%" value="%N%" />
 
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
@@ -10,7 +10,7 @@
           <Static>
             <ParameterTypes>
               <!-- Number of channels (module specific) -->
-              <ParameterType Id="%AID%_PT-SWANumChannels" Name="SWANumChannels">
+              <ParameterType Id="%AID%_PT-HTANumChannels" Name="HTANumChannels">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="%N%" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-ChannelActive" Name="ChannelActive">
@@ -72,7 +72,7 @@
               <Parameter Id="%AID%_P-%TT%00002" Name="CheckForOneChannel" ParameterType="%AID%_PT-CheckBox" Text="" Value="1" Access="None" />
               <Union SizeInBit="8">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%00001" Name="VisibleChannels" ParameterType="%AID%_PT-SWANumChannels" Offset="0" BitOffset="0" Text="Verfügbare Kanäle" Value="%SWA_NumChannelsDefault%" SuffixText=" von %N%" />
+                <Parameter Id="%AID%_UP-%TT%00001" Name="VisibleChannels" ParameterType="%AID%_PT-HTANumChannels" Offset="0" BitOffset="0" Text="Verfügbare Kanäle" Value="%HTA_NumChannelsDefault%" SuffixText=" von %N%" />
                 <!-- 7 bits free -->
               </Union>
             </Parameters>
@@ -108,7 +108,7 @@
                   </when>
                 </choose>
               </ParameterBlock>
-              <op:include href="HeatingActuatorModule.templ.xml" xpath="//Dynamic/ChannelIndependentBlock/*" type="template" prefix="SWA" IsInner="true" />
+              <op:include href="HeatingActuatorModule.templ.xml" xpath="//Dynamic/ChannelIndependentBlock/*" type="template" prefix="HTA" IsInner="true" />
             </Channel>
           </Dynamic>
         </ApplicationProgram>

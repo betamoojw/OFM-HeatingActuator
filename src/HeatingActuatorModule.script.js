@@ -1,5 +1,5 @@
 
-function SWA_loadLearnedScenes(device, online, progress, context) {
+function HTA_loadLearnedScenes(device, online, progress, context) {
     var parPersonName = device.getParameterByName("FINACT_PersonName");
     var parPersonFinger = device.getParameterByName("FINACT_PersonFinger");
     var parFingerId = device.getParameterByName("FINACT_FingerId");

@@ -287,7 +287,7 @@
                                   <ParameterRefRef RefId="%AID%_UP-%TT%%CC%025_R-%TT%%CC%02501" IndentLevel="1" />
                                   <choose ParamRefId="%AID%_UP-%TT%%CC%025_R-%TT%%CC%02501">
                                     <when test="1">
-                                      <Button Id="%AID%_B-%TT%%CC%01" Text="Gelernte Szenen von Gerät laden" Name="loadLearnedScenes" EventHandler="SWA_loadLearnedScenes" EventHandlerOnline="ConnectionOriented" />
+                                      <Button Id="%AID%_B-%TT%%CC%01" Text="Gelernte Szenen von Gerät laden" Name="loadLearnedScenes" EventHandler="HTA_loadLearnedScenes" EventHandlerOnline="ConnectionOriented" />
                                     </when>
                                   </choose>
 
