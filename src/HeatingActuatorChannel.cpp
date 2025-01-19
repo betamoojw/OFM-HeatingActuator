@@ -36,8 +36,8 @@ void HeatingActuatorChannel::setup(bool configured)
 
     pinMode(MOTOR_PINS[_channelIndex], OUTPUT);
 
-    // // set it again the standard way, just in case
-    // relaisOff();
+    // set it again the standard way, just in case
+    stopMotor();
 
     // if (configured)
     // {
