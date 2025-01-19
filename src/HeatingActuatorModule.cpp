@@ -58,6 +58,7 @@ void HeatingActuatorModule::setup(bool configured)
         ina.setMaxCurrentShunt(0.5, 0.1);
         ina.setModeShuntContinuous();
         delay(1000);
+
         logDebugP("getBusVoltageRange %u", ina.getBusVoltageRange());
         logDebugP("getGain %u", ina.getGain());
         logDebugP("getBusADC %u", ina.getBusADC());
@@ -287,12 +288,19 @@ bool HeatingActuatorModule::restorePower()
     return success;
 }
 
+void HeatingActuatorModule::showHelp()
+{
+    openknx.console.printHelpLine("hta mot NN cw", "Turn motor with channel index NN (zero-based) clockwise.");
+    openknx.console.printHelpLine("hta mot NN ccw", "Turn motor with channel index NN (zero-based) counter-clockwise.");
+    openknx.console.printHelpLine("hta mot stop", "Stop motor.");
+}
+
 bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseKo)
 {
     bool result = false;
 
-    // if (cmd.substr(0, 3) != "hta" || cmd.length() < 5)
-    //     return result;
+    if (cmd.substr(0, 3) != "hta" || cmd.length() < 5)
+        return result;
 
     if (cmd.length() == 5 && cmd.substr(4, 1) == "h")
     {

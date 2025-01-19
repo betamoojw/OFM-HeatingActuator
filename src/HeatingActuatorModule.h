@@ -45,7 +45,8 @@ class HeatingActuatorModule : public OpenKNX::Module
 
     void savePower() override;
     bool restorePower() override;
-    bool processCommand(const std::string cmd, bool diagnoseKo);
+    void showHelp() override;
+    bool processCommand(const std::string cmd, bool diagnoseKo) override;
 
     const std::string name() override;
     const std::string version() override;
