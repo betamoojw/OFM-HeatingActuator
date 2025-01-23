@@ -95,11 +95,7 @@ void HeatingActuatorModule::setup(bool configured)
 
 void HeatingActuatorModule::loop()
 {
-    //for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_CHANNEL_COUNT); i++)
-    for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
-        _channel[i]->loop();
-
-    if (_motorRunning)
+    if (_motorPower)
     {
         _currentAvg -= _currentAvg / 10;
         _currentAvg += ina.getCurrent_mA() / 10;
@@ -109,7 +105,7 @@ void HeatingActuatorModule::loop()
         {
             if (_currentAvg > OPENKNX_HTA_CURRENT_MOT_MAX_LIMIT)
             {
-                logDebugP("STOP MAX: current: %.2f", _currentAvg);
+                logDebugP("STOP MAX (current: %.2f)", _currentAvg);
                 stopMotor();
             }
 
@@ -125,10 +121,10 @@ void HeatingActuatorModule::loop()
                     _currentAvgLast > 0)
                 {
                     if (_currentAvg > _currentAvgLast &&
-                        ((!_motorRunningCcw && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CW_LIMIT)) ||
-                        (_motorRunningCcw && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CCW_LIMIT))))
+                        ((!_motorDirectionCcw && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CW_LIMIT)) ||
+                        (_motorDirectionCcw && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CCW_LIMIT))))
                     {
-                        logDebugP("STOP: current: %.2f, last: %.2f, limit: %.2f", _currentAvg, _currentAvgLast, _motorRunningCcw ? OPENKNX_HTA_CURRENT_MOT_CCW_LIMIT : OPENKNX_HTA_CURRENT_MOT_CW_LIMIT);
+                        logDebugP("STOP (current: %.2f, last: %.2f, limit: %.2f)", _currentAvg, _currentAvgLast, _motorDirectionCcw ? OPENKNX_HTA_CURRENT_MOT_CCW_LIMIT : OPENKNX_HTA_CURRENT_MOT_CW_LIMIT);
                         stopMotor();
                     }
                 }
@@ -137,6 +133,10 @@ void HeatingActuatorModule::loop()
             }
         }
     }
+
+    //for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_CHANNEL_COUNT); i++)
+    for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
+        _channel[i]->loop(_motorPower, _currentCount >= 10 ? _currentAvg : 0);
 
     for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
     {
@@ -188,17 +188,16 @@ void HeatingActuatorModule::runMotor(uint8_t channelIndex, bool ccw)
     _currentCount = 0;
     _currentAvg = 0;
     _currentAvgLast = 0;
-    _motorRunningCcw = ccw;
-    _motorRunning = true;
+    _motorDirectionCcw = ccw;
+    _motorPower = true;
 }
 
 void HeatingActuatorModule::stopMotor()
 {
     logDebugP("Stop motor");
 
-    _motorRunning = false;
-
     digitalWrite(OPENKNX_HTA_MOT_PWR_PIN, MOT_PWR_OFF);
+    _motorPower = false;
 
     for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
         _channel[i]->stopMotor();
@@ -292,6 +291,7 @@ void HeatingActuatorModule::showHelp()
 {
     openknx.console.printHelpLine("hta mot NN cw", "Turn motor with channel index NN (zero-based) clockwise.");
     openknx.console.printHelpLine("hta mot NN ccw", "Turn motor with channel index NN (zero-based) counter-clockwise.");
+    openknx.console.printHelpLine("hta mot NN cal", "Start motor calibration for channel index NN (zero-based).");
     openknx.console.printHelpLine("hta mot stop", "Stop motor.");
 }
 
@@ -308,6 +308,8 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
         openknx.console.writeDiagenoseKo("");
         openknx.console.writeDiagenoseKo("-> mot NN ccw");
         openknx.console.writeDiagenoseKo("");
+        openknx.console.writeDiagenoseKo("-> mot NN cal");
+        openknx.console.writeDiagenoseKo("");
         openknx.console.writeDiagenoseKo("-> mot stop");
         openknx.console.writeDiagenoseKo("");
     }
@@ -323,6 +325,12 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
         {
             uint8_t channelIndex = stoi(cmd.substr(8, 2));
             runMotor(channelIndex, true);
+            result = true;
+        }
+        if (cmd.length() == 14 && cmd.substr(11, 3) == "cal")
+        {
+            uint8_t channelIndex = stoi(cmd.substr(8, 2));
+            _channel[channelIndex]->startCalibration();
             result = true;
         }
         if (cmd.length() == 12 && cmd.substr(8, 4) == "stop")
