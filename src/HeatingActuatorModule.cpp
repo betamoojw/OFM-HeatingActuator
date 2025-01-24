@@ -121,10 +121,10 @@ void HeatingActuatorModule::loop()
                     _currentAvgLast > 0)
                 {
                     if (_currentAvg > _currentAvgLast &&
-                        ((!_motorDirectionCcw && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CW_LIMIT)) ||
-                        (_motorDirectionCcw && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CCW_LIMIT))))
+                        ((!_motorDirectionOpen && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CLOSE_LIMIT)) ||
+                        (_motorDirectionOpen && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_OPEN_LIMIT))))
                     {
-                        logDebugP("STOP (current: %.2f, last: %.2f, limit: %.2f)", _currentAvg, _currentAvgLast, _motorDirectionCcw ? OPENKNX_HTA_CURRENT_MOT_CCW_LIMIT : OPENKNX_HTA_CURRENT_MOT_CW_LIMIT);
+                        logDebugP("STOP (current: %.2f, last: %.2f, limit: %.2f)", _currentAvg, _currentAvgLast, _motorDirectionOpen ? OPENKNX_HTA_CURRENT_MOT_OPEN_LIMIT : OPENKNX_HTA_CURRENT_MOT_CLOSE_LIMIT);
                         stopMotor();
                     }
                 }
@@ -138,6 +138,8 @@ void HeatingActuatorModule::loop()
     for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
         _channel[i]->loop(_motorPower, _currentCount >= 10 ? _currentAvg : 0);
 
+    // just for testing:
+    // if you click a channel button, the corresponding LED will light up
     for (uint8_t i = 0; i < OPENKNX_HTA_MOT_COUNT; i++)
     {
         if (openknxGPIOModule.digitalRead(0x0200 + i) == LOW)
@@ -161,13 +163,11 @@ void HeatingActuatorModule::loop()
 // #endif
 }
 
-void HeatingActuatorModule::runMotor(uint8_t channelIndex, bool ccw)
+void HeatingActuatorModule::runMotor(uint8_t channelIndex, bool open)
 {
     stopMotor();
 
-    logDebugP("Run motor index %u, ccw: %u", channelIndex, ccw);
-
-    if (!ccw)
+    if (!open)
     {
         digitalWrite(OPENKNX_HTA_MOT_HIGH1_PIN, MOT_HIGH1_ON);
         digitalWrite(OPENKNX_HTA_MOT_HIGH2_PIN, MOT_HIGH2_OFF);
@@ -182,16 +182,17 @@ void HeatingActuatorModule::runMotor(uint8_t channelIndex, bool ccw)
         digitalWrite(OPENKNX_HTA_MOT_LOW2_PIN, MOT_LOW2_OFF);
     }
 
-    _channel[channelIndex]->runMotor();
+    _channel[channelIndex]->runMotor(open);
     digitalWrite(OPENKNX_HTA_MOT_PWR_PIN, MOT_PWR_ON);
 
     _currentCount = 0;
     _currentAvg = 0;
     _currentAvgLast = 0;
-    _motorDirectionCcw = ccw;
+    _motorDirectionOpen = open;
     _motorPower = true;
 }
 
+// there is always only one more running at the same time
 void HeatingActuatorModule::stopMotor()
 {
     logDebugP("Stop motor");
@@ -289,10 +290,11 @@ bool HeatingActuatorModule::restorePower()
 
 void HeatingActuatorModule::showHelp()
 {
-    openknx.console.printHelpLine("hta mot NN cw", "Turn motor with channel index NN (zero-based) clockwise.");
-    openknx.console.printHelpLine("hta mot NN ccw", "Turn motor with channel index NN (zero-based) counter-clockwise.");
-    openknx.console.printHelpLine("hta mot NN cal", "Start motor calibration for channel index NN (zero-based).");
-    openknx.console.printHelpLine("hta mot stop", "Stop motor.");
+    openknx.console.printHelpLine("hta ch NN opn", "Open valve (run counter-clockwise) of channel index NN (zero-based).");
+    openknx.console.printHelpLine("hta ch NN cls", "Close valve (run clockwise) of channel index NN (zero-based).");
+    openknx.console.printHelpLine("hta ch NN cal", "Start motor calibration for channel index NN (zero-based).");
+    openknx.console.printHelpLine("hta ch NN MMM", "Move valve of channel index NN (zero-based) to position MMM (0-100 %).");
+    openknx.console.printHelpLine("hta ch stop", "Stop all motors (only one running at the same time).");
 }
 
 bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseKo)
@@ -304,38 +306,47 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
 
     if (cmd.length() == 5 && cmd.substr(4, 1) == "h")
     {
-        openknx.console.writeDiagenoseKo("-> mot NN cw");
+        openknx.console.writeDiagenoseKo("-> ch NN opn");
         openknx.console.writeDiagenoseKo("");
-        openknx.console.writeDiagenoseKo("-> mot NN ccw");
+        openknx.console.writeDiagenoseKo("-> ch NN cls");
         openknx.console.writeDiagenoseKo("");
-        openknx.console.writeDiagenoseKo("-> mot NN cal");
+        openknx.console.writeDiagenoseKo("-> ch NN cal");
         openknx.console.writeDiagenoseKo("");
-        openknx.console.writeDiagenoseKo("-> mot stop");
+        openknx.console.writeDiagenoseKo("-> ch NN MMM");
+        openknx.console.writeDiagenoseKo("");
+        openknx.console.writeDiagenoseKo("-> ch stop");
         openknx.console.writeDiagenoseKo("");
     }
-    else if (cmd.length() > 8 && cmd.substr(4, 3) == "mot")
+    else if (cmd.length() > 7 && cmd.substr(4, 2) == "ch")
     {
-        if (cmd.length() == 13 && cmd.substr(11, 2) == "cw")
+        if (cmd.length() == 13 && cmd.substr(10, 3) == "opn")
         {
-            uint8_t channelIndex = stoi(cmd.substr(8, 2));
-            runMotor(channelIndex, false);
-            result = true;
-        }
-        if (cmd.length() == 14 && cmd.substr(11, 3) == "ccw")
-        {
-            uint8_t channelIndex = stoi(cmd.substr(8, 2));
+            uint8_t channelIndex = stoi(cmd.substr(7, 2));
             runMotor(channelIndex, true);
             result = true;
         }
-        if (cmd.length() == 14 && cmd.substr(11, 3) == "cal")
+        else if (cmd.length() == 12 && cmd.substr(10, 2) == "cls")
         {
-            uint8_t channelIndex = stoi(cmd.substr(8, 2));
+            uint8_t channelIndex = stoi(cmd.substr(7, 2));
+            runMotor(channelIndex, false);
+            result = true;
+        }
+        else if (cmd.length() == 13 && cmd.substr(10, 3) == "cal")
+        {
+            uint8_t channelIndex = stoi(cmd.substr(7, 2));
             _channel[channelIndex]->startCalibration();
             result = true;
         }
-        if (cmd.length() == 12 && cmd.substr(8, 4) == "stop")
+        else if (cmd.length() == 11 && cmd.substr(7, 4) == "stop")
         {
             stopMotor();
+            result = true;
+        }
+        else if (cmd.length() > 10)
+        {
+            uint8_t channelIndex = stoi(cmd.substr(7, 2));
+            uint8_t targetPercent = stoi(cmd.substr(10));
+            _channel[channelIndex]->moveValveToPosition(targetPercent / 100.0);
             result = true;
         }
     }

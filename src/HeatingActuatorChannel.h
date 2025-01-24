@@ -11,31 +11,33 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     void setup(bool configured);
     void loop(bool motorPower, float current);
 
-    void runMotor();
+    void runMotor(bool open);
     void stopMotor();
     void startCalibration();
+    void moveValveToPosition(float targetPositionPercent);
 
     void savePower();
     bool restorePower();
 
-    enum CalibrationState
+    enum MotorState
     {
-        NONE,
-        INIT,
-        CLOSING,
-        OPENING,
-        COMPLETE,
-        ERROR
+        MOT_IDLE,
+        MOT_OPENING,
+        MOT_CLOSING
     };
 
-    CalibrationState calibrationState = CalibrationState::NONE;
-    uint32_t calibratedDriveOpenTime = 0;
-    uint32_t calibratedDriveCloseTime = 0;
+    enum CalibrationState
+    {
+        CAL_NONE,
+        CAL_INIT,
+        CAL_OPENING,
+        CAL_CLOSING,
+        CAL_COMPLETE,
+        CAL_ERROR
+    };
 
-    // 0 % = fully closed, 100 % = fully open
-    uint8_t currentPositionPercent = 0;
-    uint8_t targetPositionPercent = 0;
-
+    MotorState motorState = MotorState::MOT_IDLE;
+    CalibrationState calibrationState = CalibrationState::CAL_NONE;
   protected:
 
   private:
@@ -46,4 +48,11 @@ class HeatingActuatorChannel : public OpenKNX::Channel
 
     uint32_t _motorStarted = 0;
     uint32_t _motorStopped = 0;
+
+    uint32_t _calibratedDriveOpenTime = 0;
+    uint32_t _calibratedDriveCloseTime = 0;
+
+    // 0 % = fully closed, 1 = fully open
+    float _currentPositionPercent = 0;
+    float _targetPositionPercent = 0;
 };

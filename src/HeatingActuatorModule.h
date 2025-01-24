@@ -46,7 +46,7 @@ class HeatingActuatorModule : public OpenKNX::Module
     void showHelp() override;
     bool processCommand(const std::string cmd, bool diagnoseKo) override;
 
-    void runMotor(uint8_t channelIndex, bool ccw);
+    void runMotor(uint8_t channelIndex, bool open);
     void stopMotor();
     
     const std::string name() override;
@@ -57,7 +57,7 @@ class HeatingActuatorModule : public OpenKNX::Module
     uint32_t _chSwitchLastTrigger[OPENKNX_HTA_MOT_COUNT] = {};
 
     bool _motorPower = false;
-    bool _motorDirectionCcw = false;
+    bool _motorDirectionOpen = false;
 
     float _currentAvg = 0;
     float _currentAvgLast = 0;
