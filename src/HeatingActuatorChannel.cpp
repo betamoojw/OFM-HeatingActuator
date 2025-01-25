@@ -10,13 +10,16 @@ HeatingActuatorChannel::~HeatingActuatorChannel() {}
 
 void HeatingActuatorChannel::processInputKo(GroupObject &ko)
 {
+    // if (!ParamHTA_ChActive)
+    //     return;
+
 }
 
 // should not be called by channel itself,
 // always call openknxHeatingActuatorModule.runMotor
 void HeatingActuatorChannel::runMotor(bool open)
 {
-    logDebugP("Run motor (open: %u)", open);
+    logDebugP("Run motor (open: %s)", open ? "opening" : "closing");
 
     digitalWrite(MOTOR_PINS[_channelIndex], MOT_ON);
     _motorStarted = millis();
@@ -38,7 +41,7 @@ void HeatingActuatorChannel::startCalibration()
     logDebugP("Start calibration");
     calibrationState = CalibrationState::CAL_INIT;
 
-    openknxHeatingActuatorModule.runMotor(_channelIndex, true);
+    openknxHeatingActuatorModule.runMotor(_channelIndex, false);
 }
 
 void HeatingActuatorChannel::moveValveToPosition(float targetPositionPercent)
@@ -56,12 +59,16 @@ void HeatingActuatorChannel::moveValveToPosition(float targetPositionPercent)
     openknxHeatingActuatorModule.runMotor(_channelIndex, open);
 }
 
-void HeatingActuatorChannel::loop(bool motorPower, float current)
+void HeatingActuatorChannel::loop(float current)
 {
-    if (motorPower)
+    // if (!ParamHTA_ChActive)
+    //     return;
+
+    if (motorState != MotorState::MOT_IDLE)
     {
         // motor should be running, check if motor actually connected
-        if (current < OPENKNX_HTA_CURRENT_MOT_MIN_LIMIT)
+        if (current != MOT_CURRENT_INVALID &&
+            current < OPENKNX_HTA_CURRENT_MOT_MIN_LIMIT)
         {
             if (calibrationState != CalibrationState::CAL_NONE)
                 calibrationState = CalibrationState::CAL_ERROR;
@@ -70,14 +77,15 @@ void HeatingActuatorChannel::loop(bool motorPower, float current)
             openknxHeatingActuatorModule.stopMotor();
         }
 
-        if (calibrationState == CalibrationState::CAL_COMPLETE)
+        if (calibrationState == CalibrationState::CAL_COMPLETE &&
+            _targetPositionPercent != POSITION_INVALID)
         {
             float newCurrentPositionPercent;
             u_int32_t motorRunTime = millis() - _motorStarted;
             switch (motorState)
             {
                 case MotorState::MOT_OPENING:
-                    newCurrentPositionPercent = _currentPositionPercent + motorRunTime / _calibratedDriveOpenTime;
+                    newCurrentPositionPercent = _currentPositionPercent + motorRunTime / (float)_calibratedDriveOpenTime;
                     if (newCurrentPositionPercent >= _targetPositionPercent)
                     {
                         openknxHeatingActuatorModule.stopMotor();
@@ -87,7 +95,7 @@ void HeatingActuatorChannel::loop(bool motorPower, float current)
                     }
                     break;
                 case MotorState::MOT_CLOSING:
-                    newCurrentPositionPercent = _currentPositionPercent - motorRunTime / _calibratedDriveOpenTime;
+                    newCurrentPositionPercent = _currentPositionPercent - motorRunTime / (float)_calibratedDriveCloseTime;
                     if (newCurrentPositionPercent <= _targetPositionPercent)
                     {
                         openknxHeatingActuatorModule.stopMotor();
@@ -101,19 +109,25 @@ void HeatingActuatorChannel::loop(bool motorPower, float current)
     }
     else
     {
-        // motor has stopped, move to next state
+        // motor has stopped, move to next state if currently calibrating
         switch (calibrationState)
         {
             case CalibrationState::CAL_INIT:
-                calibrationState = CalibrationState::CAL_OPENING;
-                openknxHeatingActuatorModule.runMotor(_channelIndex, true);
+                if (delayCheck(_motorStopped, MOT_RESTART_DELAY))
+                {
+                    calibrationState = CalibrationState::CAL_OPENING;
+                    openknxHeatingActuatorModule.runMotor(_channelIndex, true);
+                }
                 break;
             case CalibrationState::CAL_OPENING:
-                _calibratedDriveOpenTime = _motorStopped - _motorStarted;
-                _currentPositionPercent = 1;
+                if (delayCheck(_motorStopped, MOT_RESTART_DELAY))
+                {
+                    _calibratedDriveOpenTime = _motorStopped - _motorStarted;
+                    _currentPositionPercent = 1;
 
-                calibrationState = CalibrationState::CAL_CLOSING;
-                openknxHeatingActuatorModule.runMotor(_channelIndex, false);
+                    calibrationState = CalibrationState::CAL_CLOSING;
+                    openknxHeatingActuatorModule.runMotor(_channelIndex, false);
+                }
                 break;
             case CalibrationState::CAL_CLOSING:
                 _calibratedDriveCloseTime = _motorStopped - _motorStarted;
@@ -147,16 +161,36 @@ void HeatingActuatorChannel::setup(bool configured)
 
 void HeatingActuatorChannel::savePower()
 {
-    // if (ParamHTA_ChBehaviorPowerLoss > 0)
-    //     doSwitchInternal(ParamHTA_ChBehaviorPowerLoss == 2);
+    if (motorState == MotorState::MOT_IDLE)
+        return;
+    
+    openknxHeatingActuatorModule.stopMotor();
+
+    // reset calibration in case running
+    if (calibrationState != CalibrationState::CAL_NONE &&
+        calibrationState != CalibrationState::CAL_ERROR)
+        calibrationState = CalibrationState::CAL_NONE;
 }
 
 bool HeatingActuatorChannel::restorePower()
 {
-    // if (ParamHTA_ChBehaviorPowerRegain > 0)
-    //     doSwitchInternal(ParamHTA_ChBehaviorPowerRegain == 2);
-
     return true;
+}
+
+void HeatingActuatorChannel::writeChannelData()
+{
+    openknx.flash.writeByte(calibrationState);
+    openknx.flash.writeInt(_calibratedDriveOpenTime);
+    openknx.flash.writeInt(_calibratedDriveCloseTime);
+    openknx.flash.writeFloat(_currentPositionPercent);
+}
+
+void HeatingActuatorChannel::readChannelData()
+{
+    calibrationState = static_cast<CalibrationState>(openknx.flash.readByte());
+    _calibratedDriveOpenTime = openknx.flash.readInt();
+    _calibratedDriveCloseTime = openknx.flash.readInt();
+    _currentPositionPercent = openknx.flash.readFloat();
 }
 
 const std::string HeatingActuatorChannel::name()

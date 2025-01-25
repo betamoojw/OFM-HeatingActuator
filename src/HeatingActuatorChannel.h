@@ -1,6 +1,10 @@
 #pragma once
 #include "OpenKNX.h"
 
+#define POSITION_INVALID -1
+
+#define MOT_RESTART_DELAY 1000 // avoid power spikes, especially when changing motor direction
+
 class HeatingActuatorChannel : public OpenKNX::Channel
 {
   public:
@@ -9,7 +13,7 @@ class HeatingActuatorChannel : public OpenKNX::Channel
 
     void processInputKo(GroupObject &ko);
     void setup(bool configured);
-    void loop(bool motorPower, float current);
+    void loop(float current);
 
     void runMotor(bool open);
     void stopMotor();
@@ -18,15 +22,17 @@ class HeatingActuatorChannel : public OpenKNX::Channel
 
     void savePower();
     bool restorePower();
+    void writeChannelData();
+    void readChannelData();
 
-    enum MotorState
+    enum MotorState : uint8_t
     {
         MOT_IDLE,
         MOT_OPENING,
         MOT_CLOSING
     };
 
-    enum CalibrationState
+    enum CalibrationState : uint8_t
     {
         CAL_NONE,
         CAL_INIT,
@@ -53,6 +59,6 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     uint32_t _calibratedDriveCloseTime = 0;
 
     // 0 % = fully closed, 1 = fully open
-    float _currentPositionPercent = 0;
-    float _targetPositionPercent = 0;
+    float _currentPositionPercent = POSITION_INVALID;
+    float _targetPositionPercent = POSITION_INVALID;
 };
