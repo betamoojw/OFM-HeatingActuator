@@ -20,10 +20,51 @@
                   <Enumeration Text="Funktionslos" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
+              <ParameterType Id="%AID%_PT-ControlMode" Name="ControlMode">
+                <TypeRestriction Base="Value" SizeInBit="2">
+                  <Enumeration Text="Externer Stellwert" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Interner Regler" Value="1" Id="%ENID%" />
+                  <!-- 2 more options reserved -->
+                </TypeRestriction>
+              </ParameterType>
               <ParameterType Id="%AID%_PT-OperationMode" Name="OperationMode">
-                <TypeRestriction Base="Value" SizeInBit="1">
-                  <Enumeration Text="Schließer" Value="0" Id="%ENID%" />
-                  <Enumeration Text="Öffner" Value="1" Id="%ENID%" />
+                <TypeRestriction Base="Value" SizeInBit="2">
+                  <Enumeration Text="Heizen" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Kühlen" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Heizen und Kühlen" Value="2" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-Proportional" Name="Proportional">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="20" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ResetTime" Name="ResetTime">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="255" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-SetValue" Name="SetValue">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="100" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-Priority" Name="Priority">
+                <TypeRestriction Base="Value" SizeInBit="1" UIHint="DropDown">
+                  <Enumeration Text="Frost-/Hitzeschutz>Komfort>Nacht>Standby" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Frost-/Hitzeschutz>Nacht>Komfort>Standby" Value="1" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-TargetTemperature" Name="TargetTemperature">
+                <TypeNumber SizeInBit="8" Type="signedInt" minInclusive="-100" maxInclusive="100" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-TargetValueShiftMax" Name="TargetValueShift">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="20" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-TargetValueShift" Name="TargetValueShift">
+                <TypeRestriction Base="Value" SizeInBit="3" UIHint="DropDown">
+                  <Enumeration Text="0,1°K" Value="0" Id="%ENID%" />
+                  <Enumeration Text="0,2°K" Value="1" Id="%ENID%" />
+                  <Enumeration Text="0,5°K" Value="2" Id="%ENID%" />
+                  <Enumeration Text="1,0°K" Value="3" Id="%ENID%" />
+                  <Enumeration Text="2,0°K" Value="4" Id="%ENID%" />
+                  <Enumeration Text="3,0°K" Value="5" Id="%ENID%" />
+                  <Enumeration Text="4,0°K" Value="6" Id="%ENID%" />
+                  <Enumeration Text="5,0°K" Value="7" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-StatusSend" Name="StatusSend">
@@ -32,22 +73,6 @@
                   <Enumeration Text="Bei Änderung" Value="1" Id="%ENID%" />
                   <!-- <Enumeration Text="Bei Änderung und Sperre" Value="2" Id="%ENID%" /> -->
                   <!-- <Enumeration Text="Bei Telegrammeingang" Value="3" Id="%ENID%" /> -->
-                </TypeRestriction>
-              </ParameterType>
-              <ParameterType Id="%AID%_PT-NoChangeOffOn" Name="NoChangeOffOn">
-                <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
-                  <Enumeration Text="Keine Änderung" Value="0" Id="%ENID%" />
-                  <Enumeration Text="Aus" Value="1" Id="%ENID%" />
-                  <Enumeration Text="Ein" Value="2" Id="%ENID%" />
-                </TypeRestriction>
-              </ParameterType>
-              <ParameterType Id="%AID%_PT-NoChangeOffOnPrevious" Name="NoChangeOffOnPrevious">
-                <TypeRestriction Base="Value" SizeInBit="3" UIHint="DropDown">
-                  <Enumeration Text="Keine Änderung" Value="0" Id="%ENID%" />
-                  <Enumeration Text="Aus" Value="1" Id="%ENID%" />
-                  <Enumeration Text="Ein" Value="2" Id="%ENID%" />
-                  <Enumeration Text="Vorheriger Zustand, Schalten nachholen" Value="3" Id="%ENID%" />
-                  <Enumeration Text="Vorheriger Zustand" Value="4" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-Scene" Name="Scene">
@@ -91,9 +116,9 @@
             </Script>
           </Static>
           <Dynamic>
-            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="Schaltaktor" Icon="electric-switch">
+            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="Heizungsaktor" Icon="electric-switch">
               <ParameterBlock Id="%AID%_PB-nnn" Name="Settings" Text="Allgemein" Icon="cog-outline" ShowInComObjectTree="true">
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Schaltaktor Version %ModuleVersion%" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Heizungsaktor Version %ModuleVersion%" UIHint="Headline" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
 
                 <ParameterRefRef RefId="%AID%_P-%TT%00002_R-%TT%0000201" />
