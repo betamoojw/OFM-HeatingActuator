@@ -56,15 +56,11 @@
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="20" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-TargetValueShift" Name="TargetValueShift">
-                <TypeRestriction Base="Value" SizeInBit="3" UIHint="DropDown">
+                <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
                   <Enumeration Text="0,1°K" Value="0" Id="%ENID%" />
                   <Enumeration Text="0,2°K" Value="1" Id="%ENID%" />
                   <Enumeration Text="0,5°K" Value="2" Id="%ENID%" />
                   <Enumeration Text="1,0°K" Value="3" Id="%ENID%" />
-                  <Enumeration Text="2,0°K" Value="4" Id="%ENID%" />
-                  <Enumeration Text="3,0°K" Value="5" Id="%ENID%" />
-                  <Enumeration Text="4,0°K" Value="6" Id="%ENID%" />
-                  <Enumeration Text="5,0°K" Value="7" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-StatusSend" Name="StatusSend">
