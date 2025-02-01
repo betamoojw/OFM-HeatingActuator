@@ -34,14 +34,17 @@
                   <Enumeration Text="Heizen und Kühlen" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
+              <ParameterType Id="%AID%_PT-StuckProtection" Name="StuckProtection">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="15" />
+              </ParameterType>
               <ParameterType Id="%AID%_PT-Proportional" Name="Proportional">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="20" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-ResetTime" Name="ResetTime">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="255" />
               </ParameterType>
-              <ParameterType Id="%AID%_PT-SetValue" Name="SetValue">
-                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="100" />
+              <ParameterType Id="%AID%_PT-MaxCurrent" Name="MaxCurrent">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="25" maxInclusive="90" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-Priority" Name="Priority">
                 <TypeRestriction Base="Value" SizeInBit="1" UIHint="DropDown">
@@ -61,6 +64,20 @@
                   <Enumeration Text="0,2°K" Value="1" Id="%ENID%" />
                   <Enumeration Text="0,5°K" Value="2" Id="%ENID%" />
                   <Enumeration Text="1,0°K" Value="3" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-TargetValueShiftAction" Name="TargetValueShiftAction">
+                <TypeRestriction Base="Value" SizeInBit="1" UIHint="DropDown">
+                  <Enumeration Text="Keine Aktion" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Wechsel zu Komfort" Value="1" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ManualModeChangeToAuto" Name="ManualModeChangeToAuto">
+                <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
+                  <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Nach Zeit" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Bei langem Tastendruck (> 3 Sek.)" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Bei langem Tastendruck (> 3 Sek.) oder nach Zeit" Value="3" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-StatusSend" Name="StatusSend">
@@ -91,21 +108,31 @@
             </ParameterTypes>
             <Parameters>
               <Parameter Id="%AID%_P-%TT%00002" Name="CheckForOneChannel" ParameterType="%AID%_PT-CheckBox" Text="" Value="1" Access="None" />
-              <Union SizeInBit="8">
+              <Union SizeInBit="24">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00001" Name="VisibleChannels" ParameterType="%AID%_PT-HTANumChannels" Offset="0" BitOffset="0" Text="Verfügbare Kanäle" Value="%HTA_NumChannelsDefault%" SuffixText=" von %N%" />
-                <!-- 7 bits free -->
+                <Parameter Id="%AID%_UP-%TT%00003" Name="StuckProtection" ParameterType="%AID%_PT-StuckProtection" Offset="1" BitOffset="0" Text="Festsitzschutz alle (0 = inaktiv)" Value="6" SuffixText="Tage" />
+                <Parameter Id="%AID%_UP-%TT%00004" Name="ObjectsMaxSetValue" ParameterType="%AID%_PT-OnOffYesNo" Offset="2" BitOffset="0" Text="Objekts für max. Stellwert" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00005" Name="PowerRestoreRequestValues" ParameterType="%AID%_PT-OnOffYesNo" Offset="2" BitOffset="1" Text="Werte zusätzlich abfragen" Value="0" />
+                <!-- 6 bits free -->
               </Union>
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_UP-%TT%00001_R-%TT%0000101" RefId="%AID%_UP-%TT%00001" />
               <ParameterRef Id="%AID%_P-%TT%00002_R-%TT%0000201" RefId="%AID%_P-%TT%00002" />
+              <ParameterRef Id="%AID%_UP-%TT%00003_R-%TT%0000301" RefId="%AID%_UP-%TT%00003" />
+              <ParameterRef Id="%AID%_UP-%TT%00004_R-%TT%0000401" RefId="%AID%_UP-%TT%00004" />
+              <ParameterRef Id="%AID%_UP-%TT%00005_R-%TT%0000501" RefId="%AID%_UP-%TT%00005" />
             </ParameterRefs>
             <ComObjectTable>
               <ComObject Id="%AID%_O-%TT%00001" Name="CentralFunction" Number="0" ObjectSize="1 Bit" Text="Zentralfunktion" FunctionText="Schalten" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00002" Name="MaxSetValueInput" Number="1" ObjectSize="1 Byte" Text="Max. Stellwert" FunctionText="Eingang" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%00003" Name="MaxSetValueOutput" Number="2" ObjectSize="1 Byte" Text="Max. Stellwert" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
             </ComObjectTable>
             <ComObjectRefs>
               <ComObjectRef Id="%AID%_O-%TT%00001_R-%TT%0000101" RefId="%AID%_O-%TT%00001" />
+              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000201" RefId="%AID%_O-%TT%00002" />
+              <ComObjectRef Id="%AID%_O-%TT%00003_R-%TT%0000301" RefId="%AID%_O-%TT%00003" />
             </ComObjectRefs>
             <Script>
               <op:include href="HeatingActuatorModule.script.js" type="script" />
@@ -128,6 +155,21 @@
                     <Assign TargetParamRefRef="%AID%_UP-%TT%00001_R-%TT%0000101" Value="1" />
                   </when>
                 </choose>
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Grundeinstellungen" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00003_R-%TT%0000301" IndentLevel="1" />
+
+                <ParameterRefRef RefId="%AID%_UP-%TT%00004_R-%TT%0000401" IndentLevel="1" />
+                <choose ParamRefId="%AID%_UP-%TT%00004_R-%TT%0000401">
+                  <when test="1">
+                    <ComObjectRefRef RefId="%AID%_O-%TT%00002_R-%TT%0000201" />
+                    <ComObjectRefRef RefId="%AID%_O-%TT%00003_R-%TT%0000301" />
+                  </when>
+                </choose>
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Bei Busspannungswiederkehr" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Alle Parameter (wie Stell-/Temperaturwerte) werden bei Busspannungswiederkehr automatisch wiederhergestellt." UIHint="Information" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00005_R-%TT%0000501" IndentLevel="1" />
               </ParameterBlock>
               <op:include href="HeatingActuatorModule.templ.xml" xpath="//Dynamic/ChannelIndependentBlock/*" type="template" prefix="HTA" IsInner="true" />
             </Channel>
