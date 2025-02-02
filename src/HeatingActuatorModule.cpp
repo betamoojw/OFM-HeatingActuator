@@ -120,11 +120,11 @@ void HeatingActuatorModule::loop()
                 if (_currentCount >= 100 &&
                     _currentAvgLast > 0)
                 {
+                    uint8_t motorMaxCurrent = _channel[_motorChannelActive]->getMotorMaxCurrent(_motorDirectionOpen);
                     if (_currentAvg > _currentAvgLast &&
-                        ((!_motorDirectionOpen && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_CLOSE_LIMIT)) ||
-                        (_motorDirectionOpen && (_currentAvg > OPENKNX_HTA_CURRENT_MOT_OPEN_LIMIT))))
+                        _currentAvg > motorMaxCurrent)
                     {
-                        logDebugP("STOP (current: %.2f, last: %.2f, limit: %.2f)", _currentAvg, _currentAvgLast, _motorDirectionOpen ? OPENKNX_HTA_CURRENT_MOT_OPEN_LIMIT : OPENKNX_HTA_CURRENT_MOT_CLOSE_LIMIT);
+                        logDebugP("STOP (current: %.2f, last: %.2f, limit: %.2f)", _currentAvg, _currentAvgLast, motorMaxCurrent);
                         stopMotor();
                     }
                 }
@@ -135,7 +135,7 @@ void HeatingActuatorModule::loop()
     }
 
     for (uint8_t i = 0; i < OPENKNX_HTA_CHANNEL_COUNT; i++)
-        _channel[i]->loop(_currentCount >= 10 ? _currentAvg : MOT_CURRENT_INVALID);
+        _channel[i]->loop(_motorPower, _currentCount >= 10 ? _currentAvg : MOT_CURRENT_INVALID);
 
 
     // just for testing:
@@ -173,6 +173,7 @@ void HeatingActuatorModule::runMotor(uint8_t channelIndex, bool open)
     _currentAvg = 0;
     _currentAvgLast = 0;
     _motorDirectionOpen = open;
+    _motorChannelActive = channelIndex;
     _motorPower = true;
 }
 

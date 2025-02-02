@@ -46,7 +46,7 @@
               <ParameterType Id="%AID%_PT-MaxCurrent" Name="MaxCurrent">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="25" maxInclusive="90" />
               </ParameterType>
-              <ParameterType Id="%AID%_PT-Priority" Name="Priority">
+              <ParameterType Id="%AID%_PT-HvacModePriority" Name="HvacModePriority">
                 <TypeRestriction Base="Value" SizeInBit="1" UIHint="DropDown">
                   <Enumeration Text="Frost-/Hitzeschutz>Komfort>Nacht>Standby" Value="0" Id="%ENID%" />
                   <Enumeration Text="Frost-/Hitzeschutz>Nacht>Komfort>Standby" Value="1" Id="%ENID%" />
@@ -55,10 +55,10 @@
               <ParameterType Id="%AID%_PT-TargetTemperature" Name="TargetTemperature">
                 <TypeNumber SizeInBit="8" Type="signedInt" minInclusive="-100" maxInclusive="100" />
               </ParameterType>
-              <ParameterType Id="%AID%_PT-TargetValueShiftMax" Name="TargetValueShift">
+              <ParameterType Id="%AID%_PT-TargetTempShiftMax" Name="TargetTempShift">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="20" />
               </ParameterType>
-              <ParameterType Id="%AID%_PT-TargetValueShift" Name="TargetValueShift">
+              <ParameterType Id="%AID%_PT-TargetTempShift" Name="TargetTempShift">
                 <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
                   <Enumeration Text="0,1°K" Value="0" Id="%ENID%" />
                   <Enumeration Text="0,2°K" Value="1" Id="%ENID%" />
@@ -66,7 +66,7 @@
                   <Enumeration Text="1,0°K" Value="3" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
-              <ParameterType Id="%AID%_PT-TargetValueShiftAction" Name="TargetValueShiftAction">
+              <ParameterType Id="%AID%_PT-TargetTempShiftAction" Name="TargetTempShiftAction">
                 <TypeRestriction Base="Value" SizeInBit="1" UIHint="DropDown">
                   <Enumeration Text="Keine Aktion" Value="0" Id="%ENID%" />
                   <Enumeration Text="Wechsel zu Komfort" Value="1" Id="%ENID%" />

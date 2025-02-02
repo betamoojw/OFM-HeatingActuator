@@ -59,6 +59,7 @@ class HeatingActuatorModule : public OpenKNX::Module
     uint32_t _chSwitchLastTrigger[OPENKNX_HTA_CHANNEL_COUNT] = {};
 
     bool _motorPower = false;
+    uint8_t _motorChannelActive = 0;
     bool _motorDirectionOpen = false;
 
     float _currentAvg = 0;
