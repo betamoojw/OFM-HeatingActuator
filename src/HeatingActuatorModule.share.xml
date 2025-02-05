@@ -112,7 +112,7 @@
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00001" Name="VisibleChannels" ParameterType="%AID%_PT-HTANumChannels" Offset="0" BitOffset="0" Text="Verfügbare Kanäle" Value="%HTA_NumChannelsDefault%" SuffixText=" von %N%" />
                 <Parameter Id="%AID%_UP-%TT%00003" Name="StuckProtection" ParameterType="%AID%_PT-StuckProtection" Offset="1" BitOffset="0" Text="Festsitzschutz alle (0 = inaktiv)" Value="6" SuffixText="Tage" />
-                <Parameter Id="%AID%_UP-%TT%00004" Name="ObjectsMaxSetValue" ParameterType="%AID%_PT-OnOffYesNo" Offset="2" BitOffset="0" Text="Objekts für max. Stellwert" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00004" Name="ObjekteMaxSetValue" ParameterType="%AID%_PT-OnOffYesNo" Offset="2" BitOffset="0" Text="Objekte für max. Stellwert" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00005" Name="PowerRestoreRequestValues" ParameterType="%AID%_PT-OnOffYesNo" Offset="2" BitOffset="1" Text="Werte zusätzlich abfragen" Value="0" />
                 <!-- 6 bits free -->
               </Union>
@@ -139,7 +139,7 @@
             </Script>
           </Static>
           <Dynamic>
-            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="Heizungsaktor" Icon="electric-switch">
+            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="Heizungsaktor" Icon="heating-coil">
               <ParameterBlock Id="%AID%_PB-nnn" Name="Settings" Text="Allgemein" Icon="cog-outline" ShowInComObjectTree="true">
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Heizungsaktor Version %ModuleVersion%" UIHint="Headline" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
