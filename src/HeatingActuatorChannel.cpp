@@ -12,6 +12,14 @@ void HeatingActuatorChannel::processInputKo(GroupObject &ko)
 {
     if (!ParamHTA_ChActive)
         return;
+    
+    switch (ko.asap())
+    {
+        case HTA_OperationMode:
+        case HTA_KoSummerWinter:
+            checkOperationMode();
+            break;
+    }
 
     float newTargetTempShift = 0;
     bool targetTempShiftStep = false;
@@ -37,7 +45,7 @@ void HeatingActuatorChannel::processInputKo(GroupObject &ko)
             logDebugP("HTA_KoChTargetTempInput: %.2f", _externTargetTemp);
 
             if (ParamHTA_ChTargetTempShiftResetOnNewTargetTemp)
-                _externTargetTempShift = TEMPERATUR_INVALID;
+                _externTargetTempShift = HTA_TEMPERATUR_INVALID;
 
             break;
         case HTA_KoChTargetTempShiftInput:
@@ -81,6 +89,23 @@ void HeatingActuatorChannel::processInputKo(GroupObject &ko)
     }
 }
 
+void HeatingActuatorChannel::checkOperationMode()
+{
+    if (ParamHTA_OperationMode == HTA_OPERATION_MODE_HEATING ||
+        ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
+        _currentOperationModeHeating = true;
+    else if (ParamHTA_OperationMode == HTA_OPERATION_MODE_COOLING ||
+             ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
+        _currentOperationModeHeating = false;
+    else
+    {
+        if (ParamHTA_OperationModeChange == HTA_OPERATION_MODE_CHANGE_OBJECT_HEATING_COOLING)
+            _currentOperationModeHeating = KoHTA_OperationMode.value(DPT_Switch);
+        else
+            _currentOperationModeHeating = !KoHTA_SummerWinter.value(DPT_Switch);
+    }
+}
+
 void HeatingActuatorChannel::checkHvacMode()
 {
     HvacMode externHvacMode = static_cast<HvacMode>((uint8_t)KoHTA_ChHvacModeInput.value(DPT_HVACMode));
@@ -119,9 +144,9 @@ void HeatingActuatorChannel::checkHvacMode()
     if (_currentHvacMode != newHvacMode)
     {
         if (ParamHTA_ChTargetTempResetOnHvacModeChange)
-            _externTargetTemp = TEMPERATUR_INVALID;
+            _externTargetTemp = HTA_TEMPERATUR_INVALID;
         if (ParamHTA_ChTargetTempShiftResetOnHvacModeChange)
-            _externTargetTempShift = TEMPERATUR_INVALID;
+            _externTargetTempShift = HTA_TEMPERATUR_INVALID;
 
         _currentHvacMode = newHvacMode;
         logDebugP("checkHvacMode (_currentHvacMode=%u, newHvacMode=%u)", _currentHvacMode, newHvacMode);
@@ -169,7 +194,7 @@ void HeatingActuatorChannel::runMotor(bool open)
     digitalWrite(MOTOR_PINS[_channelIndex], MOT_ON);
     _motorStarted = millis();
 
-    motorState = open ? MotorState::MOT_OPENING : MotorState::MOT_CLOSING;
+    _motorState = open ? MotorState::MOT_OPENING : MotorState::MOT_CLOSING;
 }
 
 // should not be called by channel itself,
@@ -178,7 +203,7 @@ void HeatingActuatorChannel::stopMotor()
 {
     digitalWrite(MOTOR_PINS[_channelIndex], MOT_OFF);
     _motorStopped = millis();
-    motorState = MotorState::MOT_IDLE;
+    _motorState = MotorState::MOT_IDLE;
 }
 
 uint8_t HeatingActuatorChannel::getMotorMaxCurrent(bool open)
@@ -186,20 +211,35 @@ uint8_t HeatingActuatorChannel::getMotorMaxCurrent(bool open)
     return open ? ParamHTA_ChMotorMaxCurrentOpen : ParamHTA_ChMotorMaxCurrentClose;
 }
 
+bool HeatingActuatorChannel::considerForRequestAndMaxSetValue()
+{
+    return ParamHTA_ChConsiderForRequestAndMaxSetValue;
+}
+
+bool HeatingActuatorChannel::isOperationModeHeating()
+{
+    return _currentOperationModeHeating;
+}
+
+uint8_t HeatingActuatorChannel::getSetValueTarget()
+{
+    return static_cast<uint8_t>(round(_targetPositionPercent * 100));
+}
+
 void HeatingActuatorChannel::startCalibration()
 {
     logDebugP("Start calibration");
-    calibrationState = CalibrationState::CAL_INIT;
+    _calibrationState = CalibrationState::CAL_INIT;
 
     openknxHeatingActuatorModule.runMotor(_channelIndex, false);
 }
 
-void HeatingActuatorChannel::moveValveToPosition(float targetPositionPercent)
+bool HeatingActuatorChannel::moveValveToPosition(float targetPositionPercent)
 {
-    if (calibrationState != CalibrationState::CAL_COMPLETE)
+    if (_calibrationState != CalibrationState::CAL_COMPLETE)
     {
         logInfoP("Moving to position only possible after calibration!");
-        return;
+        return false;
     }
     
     logInfoP("Moving to position (targetPositionPercent=%.2f)", targetPositionPercent);
@@ -207,29 +247,29 @@ void HeatingActuatorChannel::moveValveToPosition(float targetPositionPercent)
 
     bool open = _currentPositionPercent < _targetPositionPercent;
     openknxHeatingActuatorModule.runMotor(_channelIndex, open);
+    
+    return true;
 }
 
 void HeatingActuatorChannel::loop(bool motorPower, float current)
 {
     if (!ParamHTA_ChActive)
         return;
+    
+    processInput();
 
-    if (_targetPositionPercent != POSITION_INVALID &&
+    if (_targetPositionPercent != HTA_POSITION_INVALID &&
         ParamHTA_ChSetValueChangeSend && delayCheck(_setValueCyclicSendTimer, ParamHTA_ChSetValueCyclicTimeMS))
     {
-        if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
+        if (_currentOperationModeHeating)
             KoHTA_ChSetValueStatusHeating.value(_targetPositionPercent, DPT_Scaling);
-        else if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
-            KoHTA_ChSetValueStatusCooling.value(_targetPositionPercent, DPT_Scaling);
         else
-        {
-            //###ToDo: check heating or cooling
-        }
+            KoHTA_ChSetValueStatusCooling.value(_targetPositionPercent, DPT_Scaling);
 
         _setValueCyclicSendTimer = delayTimerInit();
     }
     
-    if (_currentTargetTemp != TEMPERATUR_INVALID &&
+    if (_currentTargetTemp != HTA_TEMPERATUR_INVALID &&
         ParamHTA_ChTargetTempChangeSend && delayCheck(_targetTempCyclicSendTimer, ParamHTA_ChTargetTempCyclicTimeMS))
     {
         KoHTA_ChTargetTempStatus.value(_currentTargetTemp, DPT_Value_Temp);
@@ -243,26 +283,26 @@ void HeatingActuatorChannel::loop(bool motorPower, float current)
     }
 
     // motor of current channel is running
-    if (motorState != MotorState::MOT_IDLE)
+    if (_motorState != MotorState::MOT_IDLE)
     {
         // motor should be running, check if motor actually connected
         if (current != MOT_CURRENT_INVALID &&
             current < OPENKNX_HTA_CURRENT_MOT_MIN_LIMIT)
         {
-            if (calibrationState != CalibrationState::CAL_NONE)
-                calibrationState = CalibrationState::CAL_ERROR;
+            if (_calibrationState != CalibrationState::CAL_NONE)
+                _calibrationState = CalibrationState::CAL_ERROR;
 
             logDebugP("STOP: no motor connected (current: %.2f, min: %.2f)", current, OPENKNX_HTA_CURRENT_MOT_MIN_LIMIT);
             openknxHeatingActuatorModule.stopMotor();
         }
 
         // moving valve to position
-        if (calibrationState == CalibrationState::CAL_COMPLETE &&
-            _targetPositionPercent != POSITION_INVALID)
+        if (_calibrationState == CalibrationState::CAL_COMPLETE &&
+            _targetPositionPercent != HTA_POSITION_INVALID)
         {
             float newCurrentPositionPercent;
             u_int32_t motorRunTime = millis() - _motorStarted;
-            switch (motorState)
+            switch (_motorState)
             {
                 case MotorState::MOT_OPENING:
                     newCurrentPositionPercent = _currentPositionPercent + motorRunTime / (float)_calibratedDriveOpenTime;
@@ -294,22 +334,22 @@ void HeatingActuatorChannel::loop(bool motorPower, float current)
             return;
 
         // if we are calibrating, move to next calibration step
-        switch (calibrationState)
+        switch (_calibrationState)
         {
             case CalibrationState::CAL_INIT:
-                if (delayCheck(_motorStopped, MOT_RESTART_DELAY))
+                if (delayCheck(_motorStopped, HTA_MOT_RESTART_DELAY))
                 {
-                    calibrationState = CalibrationState::CAL_OPENING;
+                    _calibrationState = CalibrationState::CAL_OPENING;
                     openknxHeatingActuatorModule.runMotor(_channelIndex, true);
                 }
                 break;
             case CalibrationState::CAL_OPENING:
-                if (delayCheck(_motorStopped, MOT_RESTART_DELAY))
+                if (delayCheck(_motorStopped, HTA_MOT_RESTART_DELAY))
                 {
                     _calibratedDriveOpenTime = _motorStopped - _motorStarted;
                     _currentPositionPercent = 1;
 
-                    calibrationState = CalibrationState::CAL_CLOSING;
+                    _calibrationState = CalibrationState::CAL_CLOSING;
                     openknxHeatingActuatorModule.runMotor(_channelIndex, false);
                 }
                 break;
@@ -317,147 +357,268 @@ void HeatingActuatorChannel::loop(bool motorPower, float current)
                 _calibratedDriveCloseTime = _motorStopped - _motorStarted;
                 _currentPositionPercent = 0;
 
-                calibrationState = CalibrationState::CAL_COMPLETE;
+                _calibrationState = CalibrationState::CAL_COMPLETE;
                 logDebugP("Calibration complete (calibratedDriveOpenTime: %u ms, calibratedDriveCloseTime: %u ms)", _calibratedDriveOpenTime, _calibratedDriveCloseTime);
                 break;
         }
 
-        // first check for possible enforced position
-        float setValuePercent = POSITION_INVALID;
-        if (ParamHTA_ChEnforcedPosition &&
-            _externEnforcedPosition)
+        calculateNewSetValue();
+    }
+
+    processOutput();
+}
+
+void HeatingActuatorChannel::calculateNewSetValue()
+{
+    std::string debugLogMessage;
+
+    // first check for possible enforced position
+    float setValuePercent = HTA_POSITION_INVALID;
+    if (ParamHTA_ChEnforcedPosition &&
+        _externEnforcedPosition)
+    {
+        if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
+            setValuePercent = ParamHTA_ChEnforcedSetValueHeatingOrExtern;
+        else
         {
-            if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
+            if (_currentOperationModeHeating)
                 setValuePercent = ParamHTA_ChEnforcedSetValueHeatingOrExtern;
             else
+                setValuePercent = ParamHTA_ChEnforcedSetValueCooling;
+        }
+
+#ifdef OPENKNX_DEBUG
+        debugLogMessage = string_format("calculateNewSetValue: enforced position (setValuePercent: %.2f)", setValuePercent);
+#endif
+    }
+    // check if manual mode is active
+    else if (ParamHTA_ChManualMode && _currentManualMode)
+    {
+        if (_currentManualModeOn)
+            setValuePercent = ParamHTA_ChManualModeSetValueOn / (float)100;
+        else
+            setValuePercent = ParamHTA_ChManualModeSetValueOff / (float)100;
+
+#ifdef OPENKNX_DEBUG
+        debugLogMessage = string_format("calculateNewSetValue: manual mode (_currentManualModeOn: %u, setValuePercent: %.2f)", _currentManualModeOn, setValuePercent);
+#endif
+    }
+    // check if emergency mode should be active
+    else if (ParamHTA_ChEmergencyMode &&
+        delayCheck(_lastExternValue, ParamHTA_ChEmergencyModeDelayTimeMS))
+    {
+        if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
+            setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern;
+        else
+        {
+            if (_currentOperationModeHeating)
+                setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern;
+            else
+                setValuePercent = ParamHTA_ChEmergencyModeSetValueCooling;
+        }
+
+#ifdef OPENKNX_DEBUG
+        debugLogMessage = string_format("calculateNewSetValue: emergency mode (setValuePercent: %.2f)", setValuePercent);
+#endif
+    }
+    // check for external control
+    else if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
+    {
+        setValuePercent = _externSetValuePercent;
+
+#ifdef OPENKNX_DEBUG
+        debugLogMessage = string_format("calculateNewSetValue: external control (setValuePercent: %.2f)", setValuePercent);
+#endif
+    }
+    // standard internal regulator target temperature calculation
+    else
+    {
+        float targetTemp = _externTargetTemp;
+        if (targetTemp == HTA_TEMPERATUR_INVALID)
+        {
+            switch (_currentHvacMode)
             {
-                if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
-                    setValuePercent = ParamHTA_ChEnforcedSetValueHeatingOrExtern;
-                else if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
-                    setValuePercent = ParamHTA_ChEnforcedSetValueCooling;
+                case HvacMode::HVAC_COMFORT:
+                    if (_currentOperationModeHeating)
+                        targetTemp = ParamHTA_ChTargetTempHeatingComfort;
+                    else
+                        targetTemp = ParamHTA_ChTargetTempCoolingComfort;
+                    break;
+                case HvacMode::HVAC_NIGHT:
+                    if (_currentOperationModeHeating)
+                        targetTemp = ParamHTA_ChTargetTempHeatingNight;
+                    else
+                        targetTemp = ParamHTA_ChTargetTempCoolingNight;
+                    break;
+                case HvacMode::HVAC_PROTECT:
+                    if (_currentOperationModeHeating)
+                        targetTemp = ParamHTA_ChTargetTempHeatingProtect;
+                    else
+                        targetTemp = ParamHTA_ChTargetTempCoolingProtect;
+                    break;
+                default:
+                    if (_currentOperationModeHeating)
+                        targetTemp = ParamHTA_ChTargetTempHeatingStandby;
+                    else
+                        targetTemp = ParamHTA_ChTargetTempCoolingStandby;
+                    break;
+            }
+        }
+
+        if (_externTargetTempShift != HTA_TEMPERATUR_INVALID)
+            targetTemp += _externTargetTempShift;
+
+        if (_currentTargetTemp != targetTemp)
+        {
+            _currentTargetTemp = targetTemp;
+
+            if (ParamHTA_ChTargetTempChangeSend)
+                KoHTA_ChTargetTempStatus.value(_currentTargetTemp, DPT_Value_Temp);
+        }
+
+        //###ToDo: calculate PID value for _externRoomTemp vs. targetTemp
+
+#ifdef OPENKNX_DEBUG
+        debugLogMessage = string_format("calculateNewSetValue: regulator (_currentHvacMode: %u, _externTargetTempShift: %.2f, targetTemp: %.2f)", _currentHvacMode, _externTargetTempShift, targetTemp);
+#endif
+    }
+
+#ifdef OPENKNX_DEBUG
+    if (_lastDebugLogMessage != debugLogMessage)
+    {
+        logDebugP(debugLogMessage);
+        _lastDebugLogMessage = debugLogMessage;
+    }
+#endif
+
+    // check if we need to move valve
+    if (setValuePercent != HTA_POSITION_INVALID &&
+        (_targetPositionPercent == HTA_POSITION_INVALID || abs(_targetPositionPercent - setValuePercent) >= 0.01))
+    {
+        if (_calibrationState != CalibrationState::CAL_COMPLETE)
+        {
+            if (_calibrationState != CalibrationState::CAL_ERROR)
+                startCalibration();
+        }
+        else
+        {
+            bool moveValveRequestSuccess = moveValveToPosition(setValuePercent);
+            if (moveValveRequestSuccess && ParamHTA_ChSetValueChangeSend)
+            {
+                if (_currentOperationModeHeating)
+                    KoHTA_ChSetValueStatusHeating.value(_targetPositionPercent, DPT_Scaling);
                 else
-                {
-                    //###ToDo: check heating or cooling
-                }
+                    KoHTA_ChSetValueStatusCooling.value(_targetPositionPercent, DPT_Scaling);
+            }
+        }
+    }
+}
+
+void HeatingActuatorChannel::processInput()
+{
+#ifdef OPENKNX_HTA_GPIO_INPUT_OFFSET
+    if (!ParamHTA_ChManualMode)
+        return;
+
+    bool buttonPressed = openknxGPIOModule.digitalRead(OPENKNX_HTA_GPIO_INPUT_OFFSET + _channelIndex) == GPIO_INPUT_ON;
+    if (buttonPressed)
+    {
+        if (_currentButtonPressed)
+        {
+            if (_currentManualMode &&
+                delayCheck(_currentButtonPressedStarted, HTA_MANUAL_MODE_CHANGE_TO_AUTO_TIME_DELAY) &&
+                (ParamHTA_ChManualModeChangeToAuto == HTA_MANUAL_MODE_CHANGE_TO_AUTO_BUTTON || ParamHTA_ChManualModeChangeToAuto == HTA_MANUAL_MODE_CHANGE_TO_AUTO_BUTTON_TIME))
+            {
+                _currentManualMode = false;
+                logDebugP("processInput: manual mode button off (_currentManualMode: %u, buttonPressed: %u, _currentButtonPressed: %u, _currentButtonPressedStarted: %u)", _currentManualMode, buttonPressed, _currentButtonPressed, _currentButtonPressedStarted);
             }
         }
         else
         {
-            // check if emergency mode should be active
-            if (ParamHTA_ChEmergencyMode &&
-                delayCheck(_lastExternValue, ParamHTA_ChEmergencyModeDelayTimeMS))
+            if (_currentManualMode)
             {
-                if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
-                    setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern;
-                else
-                {
-                    if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
-                        setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern;
-                    else if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
-                        setValuePercent = ParamHTA_ChEmergencyModeSetValueCooling;
-                    else
-                    {
-                        //###ToDo: check heating or cooling
-                    }
-                }
+                _currentManualModeOn = !_currentManualModeOn;
+                logDebugP("processInput: manual mode button toggle (_currentManualMode: %u, buttonPressed: %u, _currentButtonPressed: %u)", _currentManualMode, buttonPressed, _currentButtonPressed);
             }
             else
             {
-                if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
-                    setValuePercent = _externSetValuePercent;
-                else
-                {
-                    float targetTemp = _externTargetTemp;
-                    if (targetTemp == TEMPERATUR_INVALID)
-                    {
-                        switch (_currentHvacMode)
-                        {
-                            case HvacMode::HVAC_COMFORT:
-                                if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
-                                    targetTemp = ParamHTA_ChTargetTempHeatingComfort;
-                                else if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
-                                    targetTemp = ParamHTA_ChTargetTempCoolingComfort;
-                                else
-                                {
-                                    //###ToDo: check heating or cooling
-                                }
-                                break;
-                            case HvacMode::HVAC_NIGHT:
-                                if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
-                                    targetTemp = ParamHTA_ChTargetTempHeatingNight;
-                                else if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
-                                    targetTemp = ParamHTA_ChTargetTempCoolingNight;
-                                else
-                                {
-                                    //###ToDo: check heating or cooling
-                                }
-                                break;
-                            case HvacMode::HVAC_PROTECT:
-                                if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
-                                    targetTemp = ParamHTA_ChTargetTempHeatingProtect;
-                                else if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
-                                    targetTemp = ParamHTA_ChTargetTempCoolingProtect;
-                                else
-                                {
-                                    //###ToDo: check heating or cooling
-                                }
-                                break;
-                            default:
-                                if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
-                                    targetTemp = ParamHTA_ChTargetTempHeatingStandby;
-                                else if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
-                                    targetTemp = ParamHTA_ChTargetTempCoolingStandby;
-                                else
-                                {
-                                    //###ToDo: check heating or cooling
-                                }
-                                break;
-                        }
-                    }
-
-                    if (_externTargetTempShift != TEMPERATUR_INVALID)
-                        targetTemp += _externTargetTempShift;
-
-                    if (_currentTargetTemp != targetTemp)
-                    {
-                        _currentTargetTemp = targetTemp;
-
-                        if (ParamHTA_ChTargetTempChangeSend)
-                            KoHTA_ChTargetTempStatus.value(_currentTargetTemp, DPT_Value_Temp);
-                    }
-
-                    //###ToDo: calculate PID value for _externRoomTemp vs. targetTemp
-                }
+                _currentManualMode = true;
+                _currentManualModeOn = true;
+                _currentManualModeStarted = delayTimerInit();
+                logDebugP("processInput: manual mode button on (_currentManualMode: %u, buttonPressed: %u, _currentButtonPressed: %u)", _currentManualMode, buttonPressed, _currentButtonPressed);
             }
-        }
 
-        // check if we need to move valve
-        if (setValuePercent != POSITION_INVALID &&
-            abs(_targetPositionPercent - setValuePercent) >= 0.01)
-        {
-            if (calibrationState != CalibrationState::CAL_COMPLETE)
-            {
-                if (calibrationState != CalibrationState::CAL_ERROR)
-                    startCalibration();
-            }
-            else
-            {
-                moveValveToPosition(_externSetValuePercent);
-
-                if (ParamHTA_ChSetValueChangeSend)
-                {
-                    if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
-                        KoHTA_ChSetValueStatusHeating.value(_targetPositionPercent, DPT_Scaling);
-                    else if (ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
-                        KoHTA_ChSetValueStatusCooling.value(_targetPositionPercent, DPT_Scaling);
-                    else
-                    {
-                        //###ToDo: check heating or cooling
-                    }
-                }
-            }
+            _currentButtonPressed = true;
+            _currentButtonPressedStarted = delayTimerInit();
         }
     }
+    else
+        _currentButtonPressed = false;
+
+    if (_currentManualMode &&
+        delayCheck(_currentManualModeStarted, ParamHTA_ChManualModeChangeToAutoTimeMS) &&
+        (ParamHTA_ChManualModeChangeToAuto == HTA_MANUAL_MODE_CHANGE_TO_AUTO_TIME || ParamHTA_ChManualModeChangeToAuto == HTA_MANUAL_MODE_CHANGE_TO_AUTO_BUTTON_TIME))
+    {
+        _currentManualMode = false;
+        logDebugP("processInput: manual mode time off (_currentManualMode: %u, _currentManualModeStarted: %u)", _currentManualMode, _currentManualModeStarted);
+    }
+#endif
+}
+
+void HeatingActuatorChannel::processOutput()
+{
+#ifdef OPENKNX_HTA_GPIO_OUTPUT_OFFSET
+    uint32_t ledOnTime = 0;
+
+    if (_currentManualMode)
+    {
+        if (_currentManualModeOn)
+            ledOnTime = HTA_OUTPUT_LED_PHASE;
+    }
+    else
+    {
+        if (_targetPositionPercent == HTA_POSITION_INVALID)
+            return;
+
+        ledOnTime = round(HTA_OUTPUT_LED_PHASE * _targetPositionPercent);
+
+        // minimum of 1 % and maximum of 99 % LED on to signal automatic mode
+        if (ledOnTime < 0.01)
+            ledOnTime = 0.01;
+        else if (ledOnTime > 0.99)
+            ledOnTime = 0.99;
+    }
+
+    if (ledOnTime == HTA_OUTPUT_LED_PHASE)
+    {
+        if (!_currentLedOn)
+            setOutputLed(true);
+    }
+    else if (ledOnTime == 0)
+    {
+        if (_currentLedOn)
+            setOutputLed(false);
+    }
+    else if (_currentLedOn && delayCheck(_currentLedChangeStarted, ledOnTime))
+        setOutputLed(false);
+    else if (!_currentLedOn && delayCheck(_currentLedChangeStarted, HTA_OUTPUT_LED_PHASE - ledOnTime))
+        setOutputLed(true);
+
+    if (_currentLedOnTime != ledOnTime)
+    {
+        _currentLedOnTime = ledOnTime;
+        logDebugP("processOutput (ledOnTime: %u)", ledOnTime);
+    }
+#endif
+}
+
+void HeatingActuatorChannel::setOutputLed(bool on)
+{
+#ifdef OPENKNX_HTA_GPIO_OUTPUT_OFFSET
+    openknxGPIOModule.digitalWrite(OPENKNX_HTA_GPIO_OUTPUT_OFFSET + _channelIndex, on ? GPIO_OUTPUT_ON : GPIO_OUTPUT_OFF);
+    _currentLedChangeStarted = delayTimerInit();
+    _currentLedOn = on;
+#endif
 }
 
 void HeatingActuatorChannel::setup(bool configured)
@@ -485,15 +646,15 @@ void HeatingActuatorChannel::setup(bool configured)
 
 void HeatingActuatorChannel::savePower()
 {
-    if (motorState == MotorState::MOT_IDLE)
+    if (_motorState == MotorState::MOT_IDLE)
         return;
     
     openknxHeatingActuatorModule.stopMotor();
 
     // reset calibration in case running
-    if (calibrationState != CalibrationState::CAL_NONE &&
-        calibrationState != CalibrationState::CAL_ERROR)
-        calibrationState = CalibrationState::CAL_NONE;
+    if (_calibrationState != CalibrationState::CAL_NONE &&
+        _calibrationState != CalibrationState::CAL_ERROR)
+        _calibrationState = CalibrationState::CAL_NONE;
 }
 
 bool HeatingActuatorChannel::restorePower()
@@ -503,7 +664,7 @@ bool HeatingActuatorChannel::restorePower()
 
 void HeatingActuatorChannel::writeChannelData()
 {
-    openknx.flash.writeByte(calibrationState);
+    openknx.flash.writeByte(_calibrationState);
     openknx.flash.writeInt(_calibratedDriveOpenTime);
     openknx.flash.writeInt(_calibratedDriveCloseTime);
     openknx.flash.writeFloat(_currentPositionPercent);
@@ -511,10 +672,10 @@ void HeatingActuatorChannel::writeChannelData()
 
 void HeatingActuatorChannel::readChannelData()
 {
-    calibrationState = static_cast<CalibrationState>(openknx.flash.readByte());
-    _calibratedDriveOpenTime = openknx.flash.readInt();
-    _calibratedDriveCloseTime = openknx.flash.readInt();
-    _currentPositionPercent = openknx.flash.readFloat();
+    // _calibrationState = static_cast<CalibrationState>(openknx.flash.readByte());
+    // _calibratedDriveOpenTime = openknx.flash.readInt();
+    // _calibratedDriveCloseTime = openknx.flash.readInt();
+    // _currentPositionPercent = openknx.flash.readFloat();
 }
 
 const std::string HeatingActuatorChannel::name()

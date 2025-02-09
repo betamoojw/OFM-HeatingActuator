@@ -34,6 +34,13 @@
                   <Enumeration Text="Heizen und Kühlen" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
+              <ParameterType Id="%AID%_PT-OperationModeChange" Name="OperationModeChange">
+                <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
+                  <Enumeration Text="Über Objekt Heizen/Kühlen" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Über Objekt Sommer/Winter" Value="1" Id="%ENID%" />
+                  <!-- <Enumeration Text="Automatisch" Value="2" Id="%ENID%" /> -->
+                </TypeRestriction>
+              </ParameterType>
               <ParameterType Id="%AID%_PT-StuckProtection" Name="StuckProtection">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="15" />
               </ParameterType>
@@ -108,13 +115,41 @@
             </ParameterTypes>
             <Parameters>
               <Parameter Id="%AID%_P-%TT%00002" Name="CheckForOneChannel" ParameterType="%AID%_PT-CheckBox" Text="" Value="1" Access="None" />
-              <Union SizeInBit="24">
+              <Union SizeInBit="8">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00001" Name="VisibleChannels" ParameterType="%AID%_PT-HTANumChannels" Offset="0" BitOffset="0" Text="Verfügbare Kanäle" Value="%HTA_NumChannelsDefault%" SuffixText=" von %N%" />
+                <!-- 2 bits free -->
+              </Union>
+              <Union SizeInBit="24">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="1" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00006" Name="OperationMode" ParameterType="%AID%_PT-OperationMode" Offset="2" BitOffset="0" Text="Betriebsmodus" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00007" Name="OperationModeChange" ParameterType="%AID%_PT-OperationModeChange" Offset="2" BitOffset="2" Text="Umschaltung Heizen/Kühlen" Value="1" />
+                <!-- 7 bits free -->
+                <Parameter Id="%AID%_UP-%TT%00008" Name="OperationModeCyclicBase" ParameterType="%AID%_PT-DelayBase" Offset="1" BitOffset="0" Text="Zeitbasis" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00009" Name="OperationModeCyclicTime" ParameterType="%AID%_PT-DelayTime" Offset="1" BitOffset="2" Text="Zeit" Value="0" />
+              </Union>
+              <Union SizeInBit="16">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00003" Name="StuckProtection" ParameterType="%AID%_PT-StuckProtection" Offset="1" BitOffset="0" Text="Festsitzschutz alle (0 = inaktiv)" Value="6" SuffixText="Tage" />
-                <Parameter Id="%AID%_UP-%TT%00004" Name="ObjekteMaxSetValue" ParameterType="%AID%_PT-OnOffYesNo" Offset="2" BitOffset="0" Text="Objekte für max. Stellwert" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00005" Name="PowerRestoreRequestValues" ParameterType="%AID%_PT-OnOffYesNo" Offset="2" BitOffset="1" Text="Werte zusätzlich abfragen" Value="0" />
-                <!-- 6 bits free -->
+                <Parameter Id="%AID%_UP-%TT%00005" Name="PowerRestoreRequestValues" ParameterType="%AID%_PT-OnOffYesNo" Offset="2" BitOffset="0" Text="Werte zusätzlich abfragen" Value="0" />
+                <!-- 7 bits free -->
+              </Union>
+              <Union SizeInBit="56">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00010" Name="ObjectsMaxSetValueHeating" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Objekte max. Stellwert Heizen" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00011" Name="ObjectsMaxSetValueCooling" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="1" Text="Objekte max. Stellwert Kühlen" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00012" Name="ObjectsMaxSetValueCombined" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="2" Text="Objekte max. Stellwert kombiniert" Value="0" />
+                <!-- 5 bits free -->
+                <Parameter Id="%AID%_UP-%TT%00013" Name="ObjectsMaxSetValueHeatingCyclicBase" ParameterType="%AID%_PT-DelayBase" Offset="1" BitOffset="0" Text="Zeitbasis" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00014" Name="ObjectsMaxSetValueHeatingCyclicTime" ParameterType="%AID%_PT-DelayTime" Offset="1" BitOffset="2" Text="Zeit" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00015" Name="ObjectsMaxSetValueCoolingCyclicBase" ParameterType="%AID%_PT-DelayBase" Offset="3" BitOffset="0" Text="Zeitbasis" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00016" Name="ObjectsMaxSetValueCoolingCyclicTime" ParameterType="%AID%_PT-DelayTime" Offset="3" BitOffset="2" Text="Zeit" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00017" Name="ObjectsMaxSetValueCombinedCyclicBase" ParameterType="%AID%_PT-DelayBase" Offset="5" BitOffset="0" Text="Zeitbasis" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00018" Name="ObjectsMaxSetValueCombinedCyclicTime" ParameterType="%AID%_PT-DelayTime" Offset="5" BitOffset="2" Text="Zeit" Value="0" />
+              </Union>
+              <Union SizeInBit="56">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00004" Name="ObjectsHeatingCoolingRequest" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Objekte für Heiz-/Kühlanforderung" Value="0" />
               </Union>
             </Parameters>
             <ParameterRefs>
@@ -122,17 +157,54 @@
               <ParameterRef Id="%AID%_P-%TT%00002_R-%TT%0000201" RefId="%AID%_P-%TT%00002" />
               <ParameterRef Id="%AID%_UP-%TT%00003_R-%TT%0000301" RefId="%AID%_UP-%TT%00003" />
               <ParameterRef Id="%AID%_UP-%TT%00004_R-%TT%0000401" RefId="%AID%_UP-%TT%00004" />
+              <ParameterRef Id="%AID%_UP-%TT%00004_R-%TT%0000402" RefId="%AID%_UP-%TT%00004" Text="Objekt für Heizanforderung" />
+              <ParameterRef Id="%AID%_UP-%TT%00004_R-%TT%0000403" RefId="%AID%_UP-%TT%00004" Text="Objekt für Kühlanforderung" />
               <ParameterRef Id="%AID%_UP-%TT%00005_R-%TT%0000501" RefId="%AID%_UP-%TT%00005" />
+              <ParameterRef Id="%AID%_UP-%TT%00006_R-%TT%0000601" RefId="%AID%_UP-%TT%00006" />
+              <ParameterRef Id="%AID%_UP-%TT%00007_R-%TT%0000701" RefId="%AID%_UP-%TT%00007" />
+              <ParameterRef Id="%AID%_UP-%TT%00008_R-%TT%0000801" RefId="%AID%_UP-%TT%00008" />
+              <ParameterRef Id="%AID%_UP-%TT%00009_R-%TT%0000901" RefId="%AID%_UP-%TT%00009" />
+              <ParameterRef Id="%AID%_UP-%TT%00010_R-%TT%0001001" RefId="%AID%_UP-%TT%00010" />
+              <ParameterRef Id="%AID%_UP-%TT%00011_R-%TT%0001101" RefId="%AID%_UP-%TT%00011" />
+              <ParameterRef Id="%AID%_UP-%TT%00012_R-%TT%0001201" RefId="%AID%_UP-%TT%00012" />
+              <ParameterRef Id="%AID%_UP-%TT%00013_R-%TT%0001301" RefId="%AID%_UP-%TT%00013" />
+              <ParameterRef Id="%AID%_UP-%TT%00014_R-%TT%0001401" RefId="%AID%_UP-%TT%00014" />
+              <ParameterRef Id="%AID%_UP-%TT%00015_R-%TT%0001501" RefId="%AID%_UP-%TT%00015" />
+              <ParameterRef Id="%AID%_UP-%TT%00016_R-%TT%0001601" RefId="%AID%_UP-%TT%00016" />
+              <ParameterRef Id="%AID%_UP-%TT%00017_R-%TT%0001701" RefId="%AID%_UP-%TT%00017" />
+              <ParameterRef Id="%AID%_UP-%TT%00018_R-%TT%0001801" RefId="%AID%_UP-%TT%00018" />
             </ParameterRefs>
             <ComObjectTable>
-              <ComObject Id="%AID%_O-%TT%00001" Name="CentralFunction" Number="0" ObjectSize="1 Bit" Text="Zentralfunktion" FunctionText="Schalten" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%00002" Name="MaxSetValueInput" Number="1" ObjectSize="1 Byte" Text="Max. Stellwert" FunctionText="Eingang" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
-              <ComObject Id="%AID%_O-%TT%00003" Name="MaxSetValueOutput" Number="2" ObjectSize="1 Byte" Text="Max. Stellwert" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%00001" Name="CentralFunction" Number="1" ObjectSize="1 Bit" Text="Zentralfunktion" FunctionText="Schalten" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00002" Name="OperationMode" Number="2" ObjectSize="1 Bit" Text="Heizen = 1, Kühlen = 0" FunctionText="Eingang" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00003" Name="OperationModeStatus" Number="3" ObjectSize="1 Bit" Text="Heizen = 1, Kühlen = 0" FunctionText="Status" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00004" Name="SummerWinter" Number="4" ObjectSize="1 Bit" Text="Sommer = 1, Winter = 0" FunctionText="Eingang" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00005" Name="SummerWinterStatus" Number="5" ObjectSize="1 Bit" Text="Sommer = 1, Winter = 0" FunctionText="Status" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00006" Name="MaxSetValueHeating" Number="6" ObjectSize="1 Byte" Text="Max. Stellwert Heizen" FunctionText="Eingang" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%00007" Name="MaxSetValueHeatingStatus" Number="7" ObjectSize="1 Byte" Text="Max. Stellwert Heizen" FunctionText="Status" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%00008" Name="MaxSetValueCooling" Number="8" ObjectSize="1 Byte" Text="Max. Stellwert Kühlen" FunctionText="Eingang" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%00009" Name="MaxSetValueCoolingStatus" Number="9" ObjectSize="1 Byte" Text="Max. Stellwert Kühlen" FunctionText="Status" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%00010" Name="MaxSetValueCombined" Number="10" ObjectSize="1 Byte" Text="Max. Stellwert Heizen/Kühlen" FunctionText="Eingang" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%00011" Name="MaxSetValueCombinedStatus" Number="11" ObjectSize="1 Byte" Text="Max. Stellwert Heizen/Kühlen" FunctionText="Status" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-1" />
+              <ComObject Id="%AID%_O-%TT%00012" Name="RequestHeating" Number="12" ObjectSize="1 Bit" Text="Heizanforderung" FunctionText="0 bei Stellwert = 0 %, sonst 1" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00013" Name="RequestCooling" Number="13" ObjectSize="1 Bit" Text="Kühlanforderung" FunctionText="0 bei Stellwert = 0 %, sonst 1" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00014" Name="RequestCombined" Number="14" ObjectSize="1 Bit" Text="Heiz-/Kühlanforderung" FunctionText="0 bei Stellwert = 0 %, sonst 1" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
             </ComObjectTable>
             <ComObjectRefs>
               <ComObjectRef Id="%AID%_O-%TT%00001_R-%TT%0000101" RefId="%AID%_O-%TT%00001" />
               <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000201" RefId="%AID%_O-%TT%00002" />
               <ComObjectRef Id="%AID%_O-%TT%00003_R-%TT%0000301" RefId="%AID%_O-%TT%00003" />
+              <ComObjectRef Id="%AID%_O-%TT%00004_R-%TT%0000401" RefId="%AID%_O-%TT%00004" />
+              <ComObjectRef Id="%AID%_O-%TT%00005_R-%TT%0000501" RefId="%AID%_O-%TT%00005" />
+              <ComObjectRef Id="%AID%_O-%TT%00006_R-%TT%0000601" RefId="%AID%_O-%TT%00006" />
+              <ComObjectRef Id="%AID%_O-%TT%00007_R-%TT%0000701" RefId="%AID%_O-%TT%00007" />
+              <ComObjectRef Id="%AID%_O-%TT%00008_R-%TT%0000801" RefId="%AID%_O-%TT%00008" />
+              <ComObjectRef Id="%AID%_O-%TT%00009_R-%TT%0000901" RefId="%AID%_O-%TT%00009" />
+              <ComObjectRef Id="%AID%_O-%TT%00010_R-%TT%0001001" RefId="%AID%_O-%TT%00010" />
+              <ComObjectRef Id="%AID%_O-%TT%00011_R-%TT%0001101" RefId="%AID%_O-%TT%00011" />
+              <ComObjectRef Id="%AID%_O-%TT%00012_R-%TT%0001201" RefId="%AID%_O-%TT%00012" />
+              <ComObjectRef Id="%AID%_O-%TT%00013_R-%TT%0001301" RefId="%AID%_O-%TT%00013" />
+              <ComObjectRef Id="%AID%_O-%TT%00014_R-%TT%0001401" RefId="%AID%_O-%TT%00014" />
             </ComObjectRefs>
             <Script>
               <op:include href="HeatingActuatorModule.script.js" type="script" />
@@ -157,13 +229,134 @@
                 </choose>
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Grundeinstellungen" UIHint="Headline" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00003_R-%TT%0000301" IndentLevel="1" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00006_R-%TT%0000601" IndentLevel="1" />
+                <choose ParamRefId="%AID%_UP-%TT%00006_R-%TT%0000601"> <!-- OperationMode -->
+                  <when test="2">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00007_R-%TT%0000701" IndentLevel="1" />
+                    <choose ParamRefId="%AID%_UP-%TT%00007_R-%TT%0000701"> <!-- OperationModeChange -->
+                      <when test="0">
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00002_R-%TT%0000201" />
+                      </when>
+                    </choose>
+
+                    <ComObjectRefRef RefId="%AID%_O-%TT%00003_R-%TT%0000301" />
+
+                    <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid"> <!-- OperationModeCyclic -->
+                      <Rows>
+                        <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                      </Rows>
+                      <Columns>
+                        <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="1%" />
+                        <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="44%" />
+                        <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="15%" />
+                        <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="20%" />
+                      </Columns>
+                      <ParameterSeparator Id="%AID%_PS-nnn" Text=" Heizen/Kühlen zyklisch senden&#10; (0 = nicht senden)" Cell="1,2" />
+                      <ParameterRefRef RefId="%AID%_UP-%TT%00009_R-%TT%0000901" Cell="1,3" />
+                      <ParameterRefRef RefId="%AID%_UP-%TT%00008_R-%TT%0000801" Cell="1,4" />
+                    </ParameterBlock>
+                  </when>
+                </choose>
+
+                <ComObjectRefRef RefId="%AID%_O-%TT%00004_R-%TT%0000401" />
+                <ComObjectRefRef RefId="%AID%_O-%TT%00005_R-%TT%0000501" />
+
+                <choose ParamRefId="%AID%_UP-%TT%00006_R-%TT%0000601"> <!-- OperationMode -->
+                  <when test="0 2">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00010_R-%TT%0001001" IndentLevel="1" />
+                    <choose ParamRefId="%AID%_UP-%TT%00010_R-%TT%0001001"> <!-- ObjectsMaxSetValueHeating -->
+                      <when test="1">
+                        <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid"> <!-- ObjectsMaxSetValueHeatingCyclic -->
+                          <Rows>
+                            <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                          </Rows>
+                          <Columns>
+                            <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="1%" />
+                            <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="44%" />
+                            <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="15%" />
+                            <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="20%" />
+                          </Columns>
+                          <ParameterSeparator Id="%AID%_PS-nnn" Text=" Max. Stellwert Heizen zyklisch senden&#10; (0 = nicht senden)" Cell="1,2" />
+                          <ParameterRefRef RefId="%AID%_UP-%TT%00014_R-%TT%0001401" Cell="1,3" />
+                          <ParameterRefRef RefId="%AID%_UP-%TT%00013_R-%TT%0001301" Cell="1,4" />
+                        </ParameterBlock>
+
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00006_R-%TT%0000601" />
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00007_R-%TT%0000701" />
+                      </when>
+                    </choose>
+                  </when>
+                  <when test="1 2">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00011_R-%TT%0001101" IndentLevel="1" />
+                    <choose ParamRefId="%AID%_UP-%TT%00011_R-%TT%0001101"> <!-- ObjectsMaxSetValueCooling -->
+                      <when test="1">
+                        <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid"> <!-- ObjectsMaxSetValueCoolingCyclic -->
+                          <Rows>
+                            <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                          </Rows>
+                          <Columns>
+                            <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="1%" />
+                            <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="44%" />
+                            <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="15%" />
+                            <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="20%" />
+                          </Columns>
+                          <ParameterSeparator Id="%AID%_PS-nnn" Text=" Max. Stellwert Kühlen zyklisch senden&#10; (0 = nicht senden)" Cell="1,2" />
+                          <ParameterRefRef RefId="%AID%_UP-%TT%00016_R-%TT%0001601" Cell="1,3" />
+                          <ParameterRefRef RefId="%AID%_UP-%TT%00015_R-%TT%0001501" Cell="1,4" />
+                        </ParameterBlock>
+
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00008_R-%TT%0000801" />
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00009_R-%TT%0000901" />
+                      </when>
+                    </choose>
+                  </when>
+                  <when test="2">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00012_R-%TT%0001201" IndentLevel="1" />
+                    <choose ParamRefId="%AID%_UP-%TT%00012_R-%TT%0001201"> <!-- ObjectsMaxSetValueCombined -->
+                      <when test="1">
+                        <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid"> <!-- ObjectsMaxSetValueCombinedCyclic -->
+                          <Rows>
+                            <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                          </Rows>
+                          <Columns>
+                            <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="1%" />
+                            <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="44%" />
+                            <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="15%" />
+                            <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="20%" />
+                          </Columns>
+                          <ParameterSeparator Id="%AID%_PS-nnn" Text=" Max. Stellwert kombiniert zyklisch senden&#10; (0 = nicht senden)" Cell="1,2" />
+                          <ParameterRefRef RefId="%AID%_UP-%TT%00018_R-%TT%0001801" Cell="1,3" />
+                          <ParameterRefRef RefId="%AID%_UP-%TT%00017_R-%TT%0001701" Cell="1,4" />
+                        </ParameterBlock>
+
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00010_R-%TT%0001001" />
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00011_R-%TT%0001101" />
+                      </when>
+                    </choose>
+                  </when>
+                </choose>
 
                 <ParameterRefRef RefId="%AID%_UP-%TT%00004_R-%TT%0000401" IndentLevel="1" />
-                <choose ParamRefId="%AID%_UP-%TT%00004_R-%TT%0000401">
+                <choose ParamRefId="%AID%_UP-%TT%00004_R-%TT%0000401"> <!-- ObjectsHeatingCoolingRequest -->
                   <when test="1">
-                    <ComObjectRefRef RefId="%AID%_O-%TT%00002_R-%TT%0000201" />
-                    <ComObjectRefRef RefId="%AID%_O-%TT%00003_R-%TT%0000301" />
+                    <choose ParamRefId="%AID%_UP-%TT%00006_R-%TT%0000601"> <!-- OperationMode -->
+                      <when test="0 2">
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00012_R-%TT%0001201" />
+                      </when>
+                      <when test="1 2">
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00013_R-%TT%0001301" />
+                      </when>
+                      <when test="2">
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00014_R-%TT%0001401" />
+                      </when>
+                    </choose>
+                  </when>
+                </choose>
+
+                <ParameterRefRef RefId="%AID%_UP-%TT%00003_R-%TT%0000301" IndentLevel="1" />
+                <choose ParamRefId="%AID%_UP-%TT%00003_R-%TT%0000301"> <!-- StuckProtection -->
+                  <when test="0">
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Die Motorfahrt des Feststellschutz' wird auch als Kalibrierungsfahrt genutzt. Es wird daher empfohlen den Feststellschutz aktiviert zu lassen und zumindest alle 2 Wochen auszuführen." UIHint="Information" />
                   </when>
                 </choose>
 

@@ -8,7 +8,7 @@
           <op:part href="HeatingActuatorModule.parts.xml" name="SCENE" instances="12">
             <op:param name="%ParamOffset%" value="58" increment="2" /> <!-- TODO -->
             <op:param name="%Sl%" value="0" asLetter="true" increment="1" />
-            <op:param name="%PPP%" value="56" increment="3" digits="3" />
+            <op:param name="%PPP%" value="60" increment="3" digits="3" />
           </op:part>
           <Static>
             <Parameters>
@@ -22,7 +22,8 @@
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="1" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%003" Name="Ch%C%ControlMode" ParameterType="%AID%_PT-ControlMode" Offset="0" BitOffset="0" Text="Regelungsart" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%004" Name="Ch%C%OperationMode" ParameterType="%AID%_PT-OperationMode" Offset="0" BitOffset="2" Text="Betriebsmodus" Value="0" />
-                <!-- 4 bits free -->
+                <Parameter Id="%AID%_UP-%TT%%CC%056" Name="Ch%C%SetValueZero" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="4" Text="" Value="1" />
+                <!-- 3 bits free -->
                 <Parameter Id="%AID%_UP-%TT%%CC%005" Name="Ch%C%HeatingProportional" ParameterType="%AID%_PT-Proportional" Offset="1" BitOffset="0" Text="Soll-/Ist-Differenz" Value="4" SuffixText="°K" />
                 <Parameter Id="%AID%_UP-%TT%%CC%006" Name="Ch%C%HeatingResetTime" ParameterType="%AID%_PT-ResetTime" Offset="2" BitOffset="0" Text="Nachstellzeit" Value="150" SuffixText="Min." />
                 <Parameter Id="%AID%_UP-%TT%%CC%007" Name="Ch%C%CoolingProportional" ParameterType="%AID%_PT-Proportional" Offset="3" BitOffset="0" Text="Soll-/Ist-Differenz" Value="4" SuffixText="°K" />
@@ -61,7 +62,7 @@
                 <Parameter Id="%AID%_UP-%TT%%CC%023" Name="Ch%C%SetValueChangeSend" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Stellwertänderungen senden" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%024" Name="Ch%C%TargetTempChangeSend" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="1" Text="Sollwertänderungen senden" Value="0" />
                 <!-- 6 bits free -->
-                <Parameter Id="%AID%_UP-%TT%%CC%052" Name="Ch%C%ConsiderForMaxSetValue" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="Kanal bei max. Stellwert berücksichtigen" Value="1" />
+                <Parameter Id="%AID%_UP-%TT%%CC%052" Name="Ch%C%ConsiderForRequestAndMaxSetValue" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="Kanal bei Anforderung und max. Stellwert berücksichtigen" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%%CC%025" Name="Ch%C%SetValueCyclicBase" ParameterType="%AID%_PT-DelayBase" Offset="1" BitOffset="0" Text="Zeitbasis" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%026" Name="Ch%C%SetValueCyclicTime" ParameterType="%AID%_PT-DelayTime" Offset="1" BitOffset="2" Text="Zeit" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%027" Name="Ch%C%TargetTempCyclicBase" ParameterType="%AID%_PT-DelayBase" Offset="3" BitOffset="0" Text="Zeitbasis" Value="0" />
@@ -167,6 +168,8 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%053_R-%TT%%CC%05301" RefId="%AID%_UP-%TT%%CC%053" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%054_R-%TT%%CC%05401" RefId="%AID%_UP-%TT%%CC%054" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%055_R-%TT%%CC%05501" RefId="%AID%_UP-%TT%%CC%055" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%056_R-%TT%%CC%05601" RefId="%AID%_UP-%TT%%CC%056" Text="Heizen-Stellwert im Sommer auf 0 %" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%056_R-%TT%%CC%05602" RefId="%AID%_UP-%TT%%CC%056" Text="Kühlen-Stellwert im Winter auf 0 %" />
               <op:usePart name="SCENE" xpath="//Static/ParameterRefs/*" instanceFrom="1" instanceTo="12" />
             </ParameterRefs>
             <ComObjectTable>
@@ -239,6 +242,15 @@
                           </when>
                           <when test="1"> <!-- internal regulator -->
                             <ParameterRefRef RefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" IndentLevel="1" />
+                            <choose ParamRefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401">
+                              <when test="0">
+                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%056_R-%TT%%CC%05601" IndentLevel="1" />
+                              </when>
+                              <when test="1">
+                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%056_R-%TT%%CC%05602" IndentLevel="1" />
+                              </when>
+                            </choose>
+
                             <ParameterRefRef RefId="%AID%_UP-%TT%%CC%017_R-%TT%%CC%01701" IndentLevel="1" />
                             <ParameterRefRef RefId="%AID%_UP-%TT%%CC%018_R-%TT%%CC%01801" IndentLevel="1" />
 
@@ -340,44 +352,6 @@
                           </when>
                         </choose>
 
-                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Notbetrieb" UIHint="Headline" />
-                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%051_R-%TT%%CC%05101" IndentLevel="1" />
-                        <choose ParamRefId="%AID%_UP-%TT%%CC%051_R-%TT%%CC%05101">
-                          <when test="1">
-                            <!-- Status Cyclic pattern -->
-                            <ParameterBlock Id="%AID%_PB-nnn" Name="EmergencyModeDelayCyclic" Inline="true" Layout="Grid">
-                              <Rows>
-                                <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
-                              </Rows>
-                              <Columns>
-                                <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="1%" />
-                                <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="44%" />
-                                <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="15%" />
-                                <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="20%" />
-                              </Columns>
-                              <ParameterSeparator Id="%AID%_PS-nnn" Text=" Kein Wert nach (0 = nicht aktiv)" Cell="1,2" />
-                              <ParameterRefRef RefId="%AID%_UP-%TT%%CC%030_R-%TT%%CC%03001" Cell="1,3" />
-                              <ParameterRefRef RefId="%AID%_UP-%TT%%CC%029_R-%TT%%CC%02901" Cell="1,4" />
-                            </ParameterBlock>
-
-                            <choose ParamRefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301">
-                              <when test="0"> <!-- external set value -->
-                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%031_R-%TT%%CC%03102" IndentLevel="1" />
-                              </when>
-                              <when test="1"> <!-- internal regulator -->
-                                <choose ParamRefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401">
-                                  <when test="0 2">
-                                    <ParameterRefRef RefId="%AID%_UP-%TT%%CC%031_R-%TT%%CC%03101" IndentLevel="1" />
-                                  </when>
-                                  <when test="1 2">
-                                    <ParameterRefRef RefId="%AID%_UP-%TT%%CC%032_R-%TT%%CC%03201" IndentLevel="1" />
-                                  </when>
-                                </choose>
-                              </when>
-                            </choose>
-                          </when>
-                        </choose>
-
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="Manueller Betrieb" UIHint="Headline" />
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%042_R-%TT%%CC%04201" IndentLevel="1" />
                         <choose ParamRefId="%AID%_UP-%TT%%CC%042_R-%TT%%CC%04201">
@@ -430,6 +404,44 @@
                             </choose>
 
                             <ComObjectRefRef RefId="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" />
+                          </when>
+                        </choose>
+
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Notbetrieb" UIHint="Headline" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%%CC%051_R-%TT%%CC%05101" IndentLevel="1" />
+                        <choose ParamRefId="%AID%_UP-%TT%%CC%051_R-%TT%%CC%05101">
+                          <when test="1">
+                            <!-- Status Cyclic pattern -->
+                            <ParameterBlock Id="%AID%_PB-nnn" Name="EmergencyModeDelayCyclic" Inline="true" Layout="Grid">
+                              <Rows>
+                                <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                              </Rows>
+                              <Columns>
+                                <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="1%" />
+                                <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="44%" />
+                                <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="15%" />
+                                <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="20%" />
+                              </Columns>
+                              <ParameterSeparator Id="%AID%_PS-nnn" Text=" Kein Wert nach (0 = nicht aktiv)" Cell="1,2" />
+                              <ParameterRefRef RefId="%AID%_UP-%TT%%CC%030_R-%TT%%CC%03001" Cell="1,3" />
+                              <ParameterRefRef RefId="%AID%_UP-%TT%%CC%029_R-%TT%%CC%02901" Cell="1,4" />
+                            </ParameterBlock>
+
+                            <choose ParamRefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301">
+                              <when test="0"> <!-- external set value -->
+                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%031_R-%TT%%CC%03102" IndentLevel="1" />
+                              </when>
+                              <when test="1"> <!-- internal regulator -->
+                                <choose ParamRefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401">
+                                  <when test="0 2">
+                                    <ParameterRefRef RefId="%AID%_UP-%TT%%CC%031_R-%TT%%CC%03101" IndentLevel="1" />
+                                  </when>
+                                  <when test="1 2">
+                                    <ParameterRefRef RefId="%AID%_UP-%TT%%CC%032_R-%TT%%CC%03201" IndentLevel="1" />
+                                  </when>
+                                </choose>
+                              </when>
+                            </choose>
                           </when>
                         </choose>
  
