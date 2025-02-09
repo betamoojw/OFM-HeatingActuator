@@ -117,25 +117,13 @@ void HeatingActuatorModule::loop()
                     _debugOutputTimer = delayTimerInit();
                 }
 
-                if (_currentCount >= 100 &&
-                    _currentAvgLast > 0)
-                {
-                    uint8_t motorMaxCurrent = _channel[_motorChannelActive]->getMotorMaxCurrent(_motorDirectionOpen);
-                    if (_currentAvg > _currentAvgLast &&
-                        _currentAvg > motorMaxCurrent)
-                    {
-                        logDebugP("STOP (current: %.2f, last: %.2f, limit: %.2f)", _currentAvg, _currentAvgLast, motorMaxCurrent);
-                        stopMotor();
-                    }
-                }
-
                 _currentAvgLast = _currentAvg;
             }
         }
     }
 
     for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_CHANNEL_COUNT); i++)
-        _channel[i]->loop(_motorPower, _currentCount >= 10 ? _currentAvg : MOT_CURRENT_INVALID);
+        _channel[i]->loop(_motorPower, _currentCount, _currentAvg, _currentAvgLast);
 
     processMaxSetValuesAndRequests();
 }
@@ -367,13 +355,15 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
 
     if (cmd.length() == 5 && cmd.substr(4, 1) == "h")
     {
+        openknx.console.writeDiagenoseKo("-> ch NN cal");
+        openknx.console.writeDiagenoseKo("");
         openknx.console.writeDiagenoseKo("-> ch NN opn");
         openknx.console.writeDiagenoseKo("");
         openknx.console.writeDiagenoseKo("-> ch NN cls");
         openknx.console.writeDiagenoseKo("");
-        openknx.console.writeDiagenoseKo("-> ch NN cal");
-        openknx.console.writeDiagenoseKo("");
         openknx.console.writeDiagenoseKo("-> ch NN MMM");
+        openknx.console.writeDiagenoseKo("");
+        openknx.console.writeDiagenoseKo("-> ch NN info");
         openknx.console.writeDiagenoseKo("");
         openknx.console.writeDiagenoseKo("-> ch stop");
         openknx.console.writeDiagenoseKo("");
@@ -396,6 +386,12 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
         {
             uint8_t channelIndex = stoi(cmd.substr(7, 2));
             _channel[channelIndex]->startCalibration();
+            result = true;
+        }
+        else if (cmd.length() == 14 && cmd.substr(10, 4) == "info")
+        {
+            uint8_t channelIndex = stoi(cmd.substr(7, 2));
+            _channel[channelIndex]->logChannelInfo(diagnoseKo);
             result = true;
         }
         else if (cmd.length() == 11 && cmd.substr(7, 4) == "stop")

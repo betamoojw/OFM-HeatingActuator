@@ -206,11 +206,6 @@ void HeatingActuatorChannel::stopMotor()
     _motorState = MotorState::MOT_IDLE;
 }
 
-uint8_t HeatingActuatorChannel::getMotorMaxCurrent(bool open)
-{
-    return open ? ParamHTA_ChMotorMaxCurrentOpen : ParamHTA_ChMotorMaxCurrentClose;
-}
-
 bool HeatingActuatorChannel::considerForRequestAndMaxSetValue()
 {
     return ParamHTA_ChConsiderForRequestAndMaxSetValue;
@@ -242,7 +237,7 @@ bool HeatingActuatorChannel::moveValveToPosition(float targetPositionPercent)
         return false;
     }
     
-    logInfoP("Moving to position (targetPositionPercent=%.2f)", targetPositionPercent);
+    logInfoP("Moving to position (_currentPositionPercent=%.2f, targetPositionPercent=%.2f)", _currentPositionPercent, targetPositionPercent);
     _targetPositionPercent = targetPositionPercent;
 
     bool open = _currentPositionPercent < _targetPositionPercent;
@@ -251,10 +246,16 @@ bool HeatingActuatorChannel::moveValveToPosition(float targetPositionPercent)
     return true;
 }
 
-void HeatingActuatorChannel::loop(bool motorPower, float current)
+void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float current, float currentLast)
 {
     if (!ParamHTA_ChActive)
         return;
+
+    if (currentCount < 10)
+    {
+        current = MOT_CURRENT_INVALID;
+        currentLast = MOT_CURRENT_INVALID;
+    }
     
     processInput();
 
@@ -296,6 +297,23 @@ void HeatingActuatorChannel::loop(bool motorPower, float current)
             openknxHeatingActuatorModule.stopMotor();
         }
 
+        if (currentCount >= 100 &&
+            currentLast > 0)
+        {
+            uint8_t motorMaxCurrent = _motorState == MotorState::MOT_OPENING ? ParamHTA_ChMotorMaxCurrentOpen : ParamHTA_ChMotorMaxCurrentClose;
+            if (current > currentLast + 0.1 &&
+                current > motorMaxCurrent)
+            {
+                if (_motorState == MotorState::MOT_OPENING)
+                    _currentPositionPercent = 1;
+                else
+                    _currentPositionPercent = 0;
+
+                logDebugP("STOP (current: %.2f, last: %.2f, limit: %.2f, _currentPositionPercent: %.2f)", current, currentLast, motorMaxCurrent, _currentPositionPercent);
+                openknxHeatingActuatorModule.stopMotor();
+            }
+        }
+
         // moving valve to position
         if (_calibrationState == CalibrationState::CAL_COMPLETE &&
             _targetPositionPercent != HTA_POSITION_INVALID)
@@ -305,23 +323,23 @@ void HeatingActuatorChannel::loop(bool motorPower, float current)
             switch (_motorState)
             {
                 case MotorState::MOT_OPENING:
-                    newCurrentPositionPercent = _currentPositionPercent + motorRunTime / (float)_calibratedDriveOpenTime;
+                    newCurrentPositionPercent = min(_currentPositionPercent + motorRunTime / (float)_calibratedDriveOpenTime, 1);
                     if (newCurrentPositionPercent >= _targetPositionPercent)
                     {
                         openknxHeatingActuatorModule.stopMotor();
                         _currentPositionPercent = newCurrentPositionPercent;
 
-                        logDebugP("New position reached (newCurrentPositionPercent: %.4f)", newCurrentPositionPercent);
+                        logDebugP("New position reached (newCurrentPositionPercent: %.4f, _targetPositionPercent: %.4f)", newCurrentPositionPercent, _targetPositionPercent);
                     }
                     break;
                 case MotorState::MOT_CLOSING:
-                    newCurrentPositionPercent = _currentPositionPercent - motorRunTime / (float)_calibratedDriveCloseTime;
+                    newCurrentPositionPercent = max(_currentPositionPercent - motorRunTime / (float)_calibratedDriveCloseTime, 0);
                     if (newCurrentPositionPercent <= _targetPositionPercent)
                     {
                         openknxHeatingActuatorModule.stopMotor();
                         _currentPositionPercent = newCurrentPositionPercent;
 
-                        logDebugP("New position reached (newCurrentPositionPercent: %.4f)", newCurrentPositionPercent);
+                        logDebugP("New position reached (newCurrentPositionPercent: %.4f, _targetPositionPercent: %.4f)", newCurrentPositionPercent, _targetPositionPercent);
                     }
                     break;
             }
@@ -360,9 +378,10 @@ void HeatingActuatorChannel::loop(bool motorPower, float current)
                 _calibrationState = CalibrationState::CAL_COMPLETE;
                 logDebugP("Calibration complete (calibratedDriveOpenTime: %u ms, calibratedDriveCloseTime: %u ms)", _calibratedDriveOpenTime, _calibratedDriveCloseTime);
                 break;
+            default:
+                calculateNewSetValue();
+                break;
         }
-
-        calculateNewSetValue();
     }
 
     processOutput();
@@ -568,25 +587,31 @@ void HeatingActuatorChannel::processInput()
 void HeatingActuatorChannel::processOutput()
 {
 #ifdef OPENKNX_HTA_GPIO_OUTPUT_OFFSET
+    float ledOnPercent = 0;
     uint32_t ledOnTime = 0;
 
     if (_currentManualMode)
     {
         if (_currentManualModeOn)
+        {
+            ledOnPercent = 1;
             ledOnTime = HTA_OUTPUT_LED_PHASE;
+        }
     }
     else
     {
         if (_targetPositionPercent == HTA_POSITION_INVALID)
             return;
 
-        ledOnTime = round(HTA_OUTPUT_LED_PHASE * _targetPositionPercent);
+        ledOnPercent = _targetPositionPercent;
 
         // minimum of 1 % and maximum of 99 % LED on to signal automatic mode
-        if (ledOnTime < 0.01)
-            ledOnTime = 0.01;
-        else if (ledOnTime > 0.99)
-            ledOnTime = 0.99;
+        if (ledOnPercent < 0.01)
+            ledOnPercent = 0.01;
+        else if (ledOnPercent > 0.99)
+            ledOnPercent = 0.99;
+
+        ledOnTime = round(HTA_OUTPUT_LED_PHASE * ledOnPercent);
     }
 
     if (ledOnTime == HTA_OUTPUT_LED_PHASE)
@@ -607,7 +632,7 @@ void HeatingActuatorChannel::processOutput()
     if (_currentLedOnTime != ledOnTime)
     {
         _currentLedOnTime = ledOnTime;
-        logDebugP("processOutput (ledOnTime: %u)", ledOnTime);
+        logDebugP("processOutput (ledOnPercent: %.2f, ledOnTime: %u)", ledOnPercent, ledOnTime);
     }
 #endif
 }
@@ -672,10 +697,44 @@ void HeatingActuatorChannel::writeChannelData()
 
 void HeatingActuatorChannel::readChannelData()
 {
-    // _calibrationState = static_cast<CalibrationState>(openknx.flash.readByte());
-    // _calibratedDriveOpenTime = openknx.flash.readInt();
-    // _calibratedDriveCloseTime = openknx.flash.readInt();
-    // _currentPositionPercent = openknx.flash.readFloat();
+    _calibrationState = static_cast<CalibrationState>(openknx.flash.readByte());
+    _calibratedDriveOpenTime = openknx.flash.readInt();
+    _calibratedDriveCloseTime = openknx.flash.readInt();
+    _currentPositionPercent = openknx.flash.readFloat();
+}
+
+void HeatingActuatorChannel::logChannelInfo(bool diagnoseKo)
+{
+    logInfoP("Channel info:");
+    logIndentUp();
+
+    logInfoP("_currentPositionPercent: %.2f", _currentPositionPercent);
+    logInfoP("_targetPositionPercent: %.2f", _targetPositionPercent);
+    logInfoP("_calibratedDriveOpenTime: %u", _calibratedDriveOpenTime);
+    logInfoP("_calibratedDriveCloseTime: %u", _calibratedDriveCloseTime);
+    logInfoP("_externEnforcedPosition: %u", _externEnforcedPosition);
+    logInfoP("_currentManualMode: %u (On=%u)", _currentManualMode, _currentManualModeOn);
+    logInfoP("_currentHvacMode: %u", _currentHvacMode);
+
+    if (diagnoseKo)
+    {
+        openknx.console.writeDiagnoseKo("HTA cur %.2f", _currentPositionPercent);
+        openknx.console.writeDiagnoseKo("");
+        openknx.console.writeDiagnoseKo("HTA tar %.2f", _targetPositionPercent);
+        openknx.console.writeDiagnoseKo("");
+        openknx.console.writeDiagnoseKo("HTA calo %u", _calibratedDriveOpenTime);
+        openknx.console.writeDiagnoseKo("");
+        openknx.console.writeDiagnoseKo("HTA calc %u", _calibratedDriveCloseTime);
+        openknx.console.writeDiagnoseKo("");
+        openknx.console.writeDiagnoseKo("HTA enf %u", _externEnforcedPosition);
+        openknx.console.writeDiagnoseKo("");
+        openknx.console.writeDiagnoseKo("HTA man %u %u", _currentManualMode, _currentManualModeOn);
+        openknx.console.writeDiagnoseKo("");
+        openknx.console.writeDiagnoseKo("HTA hvac %u", _currentHvacMode);
+        openknx.console.writeDiagnoseKo("");
+    }
+
+    logIndentDown();
 }
 
 const std::string HeatingActuatorChannel::name()

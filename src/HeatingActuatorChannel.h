@@ -33,11 +33,10 @@ class HeatingActuatorChannel : public OpenKNX::Channel
 
     void processInputKo(GroupObject &ko);
     void setup(bool configured);
-    void loop(bool motorPower, float current);
+    void loop(bool motorPower, uint32_t currentCount, float current, float currentLast);
 
     void runMotor(bool open);
     void stopMotor();
-    uint8_t getMotorMaxCurrent(bool open);
     bool considerForRequestAndMaxSetValue();
     bool isOperationModeHeating();
     uint8_t getSetValueTarget();
@@ -48,6 +47,8 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     bool restorePower();
     void writeChannelData();
     void readChannelData();
+
+    void logChannelInfo(bool diagnoseKo);
 
   protected:
 
