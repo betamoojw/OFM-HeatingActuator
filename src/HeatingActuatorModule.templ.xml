@@ -8,7 +8,7 @@
           <op:part href="HeatingActuatorModule.parts.xml" name="SCENE" instances="12">
             <op:param name="%ParamOffset%" value="58" increment="2" /> <!-- TODO -->
             <op:param name="%Sl%" value="0" asLetter="true" increment="1" />
-            <op:param name="%PPP%" value="60" increment="3" digits="3" />
+            <op:param name="%PPP%" value="60" increment="8" digits="3" />
           </op:part>
           <Static>
             <Parameters>
@@ -22,7 +22,7 @@
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="1" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%003" Name="Ch%C%ControlMode" ParameterType="%AID%_PT-ControlMode" Offset="0" BitOffset="0" Text="Regelungsart" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%004" Name="Ch%C%OperationMode" ParameterType="%AID%_PT-OperationMode" Offset="0" BitOffset="2" Text="Betriebsmodus" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%056" Name="Ch%C%SetValueZero" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="4" Text="" Value="1" />
+                <Parameter Id="%AID%_UP-%TT%%CC%054" Name="Ch%C%SetValueZero" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="4" Text="" Value="1" />
                 <!-- 3 bits free -->
                 <Parameter Id="%AID%_UP-%TT%%CC%005" Name="Ch%C%HeatingProportional" ParameterType="%AID%_PT-Proportional" Offset="1" BitOffset="0" Text="Soll-/Ist-Differenz" Value="4" SuffixText="°K" />
                 <Parameter Id="%AID%_UP-%TT%%CC%006" Name="Ch%C%HeatingResetTime" ParameterType="%AID%_PT-ResetTime" Offset="2" BitOffset="0" Text="Nachstellzeit" Value="150" SuffixText="Min." />
@@ -31,14 +31,14 @@
               </Union>
               <Union SizeInBit="72">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="7" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%009" Name="Ch%C%TargetTempHeatingComfort" ParameterType="%AID%_PT-TargetTemperature" Offset="0" BitOffset="0" Text="Sollwert Komfort" Value="21" SuffixText="°C" />
-                <Parameter Id="%AID%_UP-%TT%%CC%010" Name="Ch%C%TargetTempHeatingStandby" ParameterType="%AID%_PT-TargetTemperature" Offset="1" BitOffset="0" Text="Sollwert Standby" Value="19" SuffixText="°C" />
-                <Parameter Id="%AID%_UP-%TT%%CC%011" Name="Ch%C%TargetTempHeatingNight" ParameterType="%AID%_PT-TargetTemperature" Offset="2" BitOffset="0" Text="Sollwert Nacht" Value="18" SuffixText="°C" />
-                <Parameter Id="%AID%_UP-%TT%%CC%012" Name="Ch%C%TargetTempHeatingProtect" ParameterType="%AID%_PT-TargetTemperature" Offset="3" BitOffset="0" Text="Sollwert Frostschutz" Value="7" SuffixText="°C" />
-                <Parameter Id="%AID%_UP-%TT%%CC%013" Name="Ch%C%TargetTempCoolingComfort" ParameterType="%AID%_PT-TargetTemperature" Offset="4" BitOffset="0" Text="Sollwert Komfort" Value="23" SuffixText="°C" />
-                <Parameter Id="%AID%_UP-%TT%%CC%014" Name="Ch%C%TargetTempCoolingStandby" ParameterType="%AID%_PT-TargetTemperature" Offset="5" BitOffset="0" Text="Sollwert Standby" Value="24" SuffixText="°C" />
-                <Parameter Id="%AID%_UP-%TT%%CC%015" Name="Ch%C%TargetTempCoolingNight" ParameterType="%AID%_PT-TargetTemperature" Offset="6" BitOffset="0" Text="Sollwert Nacht" Value="25" SuffixText="°C" />
-                <Parameter Id="%AID%_UP-%TT%%CC%016" Name="Ch%C%TargetTempCoolingProtect" ParameterType="%AID%_PT-TargetTemperature" Offset="7" BitOffset="0" Text="Sollwert Hitzeschutz" Value="35" SuffixText="°C" />
+                <Parameter Id="%AID%_UP-%TT%%CC%009" Name="Ch%C%TargetTempHeatingComfort" ParameterType="%AID%_PT-TargetTemp" Offset="0" BitOffset="0" Text="Sollwert Komfort" Value="21" SuffixText="°C" />
+                <Parameter Id="%AID%_UP-%TT%%CC%010" Name="Ch%C%TargetTempHeatingStandby" ParameterType="%AID%_PT-TargetTemp" Offset="1" BitOffset="0" Text="Sollwert Standby" Value="19" SuffixText="°C" />
+                <Parameter Id="%AID%_UP-%TT%%CC%011" Name="Ch%C%TargetTempHeatingNight" ParameterType="%AID%_PT-TargetTemp" Offset="2" BitOffset="0" Text="Sollwert Nacht" Value="18" SuffixText="°C" />
+                <Parameter Id="%AID%_UP-%TT%%CC%012" Name="Ch%C%TargetTempHeatingProtect" ParameterType="%AID%_PT-TargetTemp" Offset="3" BitOffset="0" Text="Sollwert Frostschutz" Value="7" SuffixText="°C" />
+                <Parameter Id="%AID%_UP-%TT%%CC%013" Name="Ch%C%TargetTempCoolingComfort" ParameterType="%AID%_PT-TargetTemp" Offset="4" BitOffset="0" Text="Sollwert Komfort" Value="23" SuffixText="°C" />
+                <Parameter Id="%AID%_UP-%TT%%CC%014" Name="Ch%C%TargetTempCoolingStandby" ParameterType="%AID%_PT-TargetTemp" Offset="5" BitOffset="0" Text="Sollwert Standby" Value="24" SuffixText="°C" />
+                <Parameter Id="%AID%_UP-%TT%%CC%015" Name="Ch%C%TargetTempCoolingNight" ParameterType="%AID%_PT-TargetTemp" Offset="6" BitOffset="0" Text="Sollwert Nacht" Value="25" SuffixText="°C" />
+                <Parameter Id="%AID%_UP-%TT%%CC%016" Name="Ch%C%TargetTempCoolingProtect" ParameterType="%AID%_PT-TargetTemp" Offset="7" BitOffset="0" Text="Sollwert Hitzeschutz" Value="35" SuffixText="°C" />
                 <Parameter Id="%AID%_UP-%TT%%CC%017" Name="Ch%C%HvacModePriority" ParameterType="%AID%_PT-HvacModePriority" Offset="8" BitOffset="0" Text="HVAC-Modus Priorität" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%018" Name="Ch%C%TargetTempResetOnHvacModeChange" ParameterType="%AID%_PT-OnOffYesNo" Offset="8" BitOffset="1" Text="Sollwerte bei HVAC-Modus-Wechsel zurücksetzen" Value="0" />
                 <!-- 6 bits free -->
@@ -104,9 +104,8 @@
               </Union>
               <Union SizeInBit="8">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="37" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%054" Name="Ch%C%ScenesActive" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Szenen aktivieren" Value="0" Access="None" />
-                <!-- 6 bits free -->
-                <Parameter Id="%AID%_UP-%TT%%CC%055" Name="Ch%C%SceneLearn" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="Szene lernen" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%055" Name="Ch%C%ScenesActive" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Szenen aktivieren" Value="0" />
+                <!-- 7 bits free -->
               </Union>
               <op:usePart name="SCENE" xpath="//Static/Parameters/*" instanceFrom="1" instanceTo="12" />
             </Parameters>
@@ -115,6 +114,8 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%002_R-%TT%%CC%00201" RefId="%AID%_UP-%TT%%CC%002" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301" RefId="%AID%_UP-%TT%%CC%003" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" RefId="%AID%_UP-%TT%%CC%004" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00402" RefId="%AID%_UP-%TT%%CC%004" Access="Read" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00403" RefId="%AID%_UP-%TT%%CC%004" Value="1" Access="Read" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%005_R-%TT%%CC%00501" RefId="%AID%_UP-%TT%%CC%005" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%006_R-%TT%%CC%00601" RefId="%AID%_UP-%TT%%CC%006" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%007_R-%TT%%CC%00701" RefId="%AID%_UP-%TT%%CC%007" />
@@ -166,10 +167,9 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%051_R-%TT%%CC%05101" RefId="%AID%_UP-%TT%%CC%051" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%052_R-%TT%%CC%05201" RefId="%AID%_UP-%TT%%CC%052" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%053_R-%TT%%CC%05301" RefId="%AID%_UP-%TT%%CC%053" />
-              <ParameterRef Id="%AID%_UP-%TT%%CC%054_R-%TT%%CC%05401" RefId="%AID%_UP-%TT%%CC%054" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%054_R-%TT%%CC%05401" RefId="%AID%_UP-%TT%%CC%054" Text="Heizen-Stellwert im Sommer auf 0 %" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%054_R-%TT%%CC%05402" RefId="%AID%_UP-%TT%%CC%054" Text="Kühlen-Stellwert im Winter auf 0 %" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%055_R-%TT%%CC%05501" RefId="%AID%_UP-%TT%%CC%055" />
-              <ParameterRef Id="%AID%_UP-%TT%%CC%056_R-%TT%%CC%05601" RefId="%AID%_UP-%TT%%CC%056" Text="Heizen-Stellwert im Sommer auf 0 %" />
-              <ParameterRef Id="%AID%_UP-%TT%%CC%056_R-%TT%%CC%05602" RefId="%AID%_UP-%TT%%CC%056" Text="Kühlen-Stellwert im Winter auf 0 %" />
               <op:usePart name="SCENE" xpath="//Static/ParameterRefs/*" instanceFrom="1" instanceTo="12" />
             </ParameterRefs>
             <ComObjectTable>
@@ -241,13 +241,26 @@
                             <ComObjectRefRef RefId="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" />
                           </when>
                           <when test="1"> <!-- internal regulator -->
-                            <ParameterRefRef RefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" IndentLevel="1" />
-                            <choose ParamRefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401">
+                            <choose ParamRefId="%AID%_UP-%TT%00006_R-%TT%0000601"> <!-- global OperationMode -->
                               <when test="0">
-                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%056_R-%TT%%CC%05601" IndentLevel="1" />
+                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00402" IndentLevel="1" />
+                                <Assign TargetParamRefRef="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" SourceParamRefRef="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00402" />
                               </when>
                               <when test="1">
-                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%056_R-%TT%%CC%05602" IndentLevel="1" />
+                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00403" IndentLevel="1" />
+                                <Assign TargetParamRefRef="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" SourceParamRefRef="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00403" />
+                              </when>
+                              <when test="2">
+                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401" IndentLevel="1" />
+                              </when>
+                            </choose>
+                            
+                            <choose ParamRefId="%AID%_UP-%TT%%CC%004_R-%TT%%CC%00401">
+                              <when test="0">
+                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%054_R-%TT%%CC%05401" IndentLevel="1" />
+                              </when>
+                              <when test="1">
+                                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%054_R-%TT%%CC%05402" IndentLevel="1" />
                               </when>
                             </choose>
 
@@ -517,21 +530,13 @@
 
                         <choose ParamRefId="%AID%_UP-%TT%%CC%003_R-%TT%%CC%00301">
                           <when test="1"> <!-- internal regulator -->
-                            <!-- <ParameterSeparator Id="%AID%_PS-nnn" Text="Zusatzfunktionen" UIHint="Headline" /> -->
-                            <ParameterRefRef RefId="%AID%_UP-%TT%%CC%054_R-%TT%%CC%05401" IndentLevel="1" />
+                            <ParameterSeparator Id="%AID%_PS-nnn" Text="Zusatzfunktionen" UIHint="Headline" />
+                            <ParameterRefRef RefId="%AID%_UP-%TT%%CC%055_R-%TT%%CC%05501" IndentLevel="1" />
 
                             <!-- Scenes -->
-                            <choose ParamRefId="%AID%_UP-%TT%%CC%054_R-%TT%%CC%05401">
+                            <choose ParamRefId="%AID%_UP-%TT%%CC%055_R-%TT%%CC%05501">
                               <when test="1">
                                 <ParameterBlock Id="%AID%_PB-nnn" Text="Szenen" Icon="movie-open-outline">
-                                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline" />
-                                  <ParameterRefRef RefId="%AID%_UP-%TT%%CC%055_R-%TT%%CC%05501" IndentLevel="1" />
-                                  <choose ParamRefId="%AID%_UP-%TT%%CC%055_R-%TT%%CC%05501">
-                                    <when test="1">
-                                      <Button Id="%AID%_B-%TT%%CC%01" Text="Gelernte Szenen von Gerät laden" Name="loadLearnedScenes" EventHandler="HTA_loadLearnedScenes" EventHandlerOnline="ConnectionOriented" />
-                                    </when>
-                                  </choose>
-
                                   <op:usePart name="SCENE" xpath="//Dynamic/ChannelIndependentBlock/ParameterBlock[@Name='SzenePart']/*" instanceFrom="1" instanceTo="12" />
 
                                   <ComObjectRefRef RefId="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" />

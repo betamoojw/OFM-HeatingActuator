@@ -17,13 +17,13 @@
     [
         {
             "owner": "robtillaart",
-            "name": "TCA9555",
-            "version": "^0.3.2"
+            "name": "INA219",
+            "version": "^0.4.0"
         },
         {
             "owner": "robtillaart",
-            "name": "INA219",
-            "version": "^0.4.0"
+            "name": "PID_RT",
+            "version": "^0.1.7"
         }
     ]
 }

@@ -59,7 +59,7 @@
                   <Enumeration Text="Frost-/Hitzeschutz>Nacht>Komfort>Standby" Value="1" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
-              <ParameterType Id="%AID%_PT-TargetTemperature" Name="TargetTemperature">
+              <ParameterType Id="%AID%_PT-TargetTemp" Name="TargetTemp">
                 <TypeNumber SizeInBit="8" Type="signedInt" minInclusive="-100" maxInclusive="100" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-TargetTempShiftMax" Name="TargetTempShift">
@@ -104,12 +104,23 @@
                   <Enumeration Text="Vorheriger Zustand" Value="4" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
-              <ParameterType Id="%AID%_PT-SceneBehavior" Name="SceneBehavior">
+              <ParameterType Id="%AID%_PT-SceneHvacMode" Name="SceneHvacMode">
                 <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
-                  <Enumeration Text="Aus" Value="0" Id="%ENID%" />
-                  <Enumeration Text="Ein" Value="1" Id="%ENID%" />
-                  <Enumeration Text="Sperren" Value="2" Id="%ENID%" />
-                  <Enumeration Text="Entsperren" Value="3" Id="%ENID%" />
+                  <Enumeration Text="Komfort" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Standby" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Nacht" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Frost-/Hitzeschutz" Value="3" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-SceneTargetTemp" Name="SceneTargetTemp">
+                <TypeNumber SizeInBit="8" Type="signedInt" minInclusive="-100" maxInclusive="100" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-SceneTargetTempShift" Name="SceneTargetTempShift">
+                <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
+                  <Enumeration Text="0,1°K" Value="0" Id="%ENID%" />
+                  <Enumeration Text="0,2°K" Value="1" Id="%ENID%" />
+                  <Enumeration Text="0,5°K" Value="2" Id="%ENID%" />
+                  <Enumeration Text="1,0°K" Value="3" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
             </ParameterTypes>
@@ -206,9 +217,6 @@
               <ComObjectRef Id="%AID%_O-%TT%00013_R-%TT%0001301" RefId="%AID%_O-%TT%00013" />
               <ComObjectRef Id="%AID%_O-%TT%00014_R-%TT%0001401" RefId="%AID%_O-%TT%00014" />
             </ComObjectRefs>
-            <Script>
-              <op:include href="HeatingActuatorModule.script.js" type="script" />
-            </Script>
           </Static>
           <Dynamic>
             <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="Heizungsaktor" Icon="heating-coil">
@@ -336,7 +344,19 @@
                   </when>
                 </choose>
 
-                <ParameterRefRef RefId="%AID%_UP-%TT%00004_R-%TT%0000401" IndentLevel="1" />
+                <choose ParamRefId="%AID%_UP-%TT%00006_R-%TT%0000601"> <!-- OperationMode -->
+                  <when test="0">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00004_R-%TT%0000402" IndentLevel="1" />
+                    <Assign TargetParamRefRef="%AID%_UP-%TT%00004_R-%TT%0000401" SourceParamRefRef="%AID%_UP-%TT%00004_R-%TT%0000402" />
+                  </when>
+                  <when test="1">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00004_R-%TT%0000403" IndentLevel="1" />
+                    <Assign TargetParamRefRef="%AID%_UP-%TT%00004_R-%TT%0000401" SourceParamRefRef="%AID%_UP-%TT%00004_R-%TT%0000403" />
+                  </when>
+                  <when test="2">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00004_R-%TT%0000401" IndentLevel="1" />
+                  </when>
+                </choose>
                 <choose ParamRefId="%AID%_UP-%TT%00004_R-%TT%0000401"> <!-- ObjectsHeatingCoolingRequest -->
                   <when test="1">
                     <choose ParamRefId="%AID%_UP-%TT%00006_R-%TT%0000601"> <!-- OperationMode -->

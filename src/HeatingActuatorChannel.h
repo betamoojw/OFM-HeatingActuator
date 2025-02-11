@@ -1,9 +1,11 @@
 #pragma once
 #include "OpenKNX.h"
+#include "PID_RT.h"
 #include "FormatHelper.cpp"
 
 #define HTA_POSITION_INVALID -1
 #define HTA_TEMPERATUR_INVALID -127
+#define HTA_SCENE_INVALID 255
 
 #define HTA_MOT_RESTART_DELAY 1000 // avoid power spikes, especially when changing motor direction
 
@@ -84,6 +86,11 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     void checkOperationMode();
     void checkHvacMode();
     void checkTargetTempShift(float newTargetTempShift);
+    void processScene(uint8_t sceneNumber);
+
+    void setHvacMode(HvacMode hvacMode);
+    void setTargetTemp(float newTargetTemp);
+    void setTargetTempShift(float newTargetTempShift);
 
     void calculateNewSetValue();
     void processInput();
@@ -113,9 +120,11 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     uint32_t _lastExternValue = 0;
 
     float _externTargetTemp = HTA_TEMPERATUR_INVALID;
-    float _externTargetTempShift = HTA_TEMPERATUR_INVALID;
+    float _externTargetTempShift = 0;
 
     float _currentTargetTemp = HTA_TEMPERATUR_INVALID;
+    PID_RT pid;
+
     bool _currentOperationModeHeating = true;
     HvacMode _currentHvacMode = HvacMode::HVAC_NONE;
     bool _currentManualMode = false;

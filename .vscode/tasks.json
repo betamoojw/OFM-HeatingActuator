@@ -10,11 +10,11 @@
             "args": [
                 "baggages",
                 "--DocFileName",
-                "doc/Applikationbeschreibung-Praesenz.md",
+                "doc/Applikationbeschreibung-Heizungsaktor.md",
                 "--BaggagesDir",
                 "src/Baggages/Help_de",
                 "--Prefix",
-                "PM"
+                "HTA"
             ],
             "problemMatcher": [],
             "group": "test"

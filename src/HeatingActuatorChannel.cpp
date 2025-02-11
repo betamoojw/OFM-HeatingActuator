@@ -21,6 +21,7 @@ void HeatingActuatorChannel::processInputKo(GroupObject &ko)
             break;
     }
 
+    float newTargetTemp = 0;
     float newTargetTempShift = 0;
     bool targetTempShiftStep = false;
     float targetTempShiftStepSize = 0;
@@ -41,12 +42,9 @@ void HeatingActuatorChannel::processInputKo(GroupObject &ko)
             logDebugP("HTA_KoChRoomTempInput: %.2f", _externRoomTemp);
             break;
         case HTA_KoChTargetTempInput:
-            _externTargetTemp = ko.value(DPT_Value_Temp);
-            logDebugP("HTA_KoChTargetTempInput: %.2f", _externTargetTemp);
-
-            if (ParamHTA_ChTargetTempShiftResetOnNewTargetTemp)
-                _externTargetTempShift = HTA_TEMPERATUR_INVALID;
-
+            newTargetTemp = ko.value(DPT_Value_Temp);
+            logDebugP("HTA_KoChTargetTempInput: %.2f", newTargetTemp);
+            setTargetTemp(newTargetTemp);
             break;
         case HTA_KoChTargetTempShiftInput:
             newTargetTempShift = ko.value(DPT_Value_Temp);
@@ -85,6 +83,10 @@ void HeatingActuatorChannel::processInputKo(GroupObject &ko)
         case HTA_KoChHvacModeInputNight:
         case HTA_KoChHvacModeInputProtect:
             checkHvacMode();
+            break;
+        case HTA_KoChScene:
+            if ((uint8_t)ko.value(Dpt(18, 1, 0)) == 0)
+                processScene(ko.value(Dpt(18, 1, 1)));
             break;
     }
 }
@@ -141,16 +143,7 @@ void HeatingActuatorChannel::checkHvacMode()
     if (newHvacMode == HvacMode::HVAC_NONE)
         newHvacMode = HvacMode::HVAC_STANDBY;
     
-    if (_currentHvacMode != newHvacMode)
-    {
-        if (ParamHTA_ChTargetTempResetOnHvacModeChange)
-            _externTargetTemp = HTA_TEMPERATUR_INVALID;
-        if (ParamHTA_ChTargetTempShiftResetOnHvacModeChange)
-            _externTargetTempShift = HTA_TEMPERATUR_INVALID;
-
-        _currentHvacMode = newHvacMode;
-        logDebugP("checkHvacMode (_currentHvacMode=%u, newHvacMode=%u)", _currentHvacMode, newHvacMode);
-    }
+    setHvacMode(newHvacMode);
 }
 
 void HeatingActuatorChannel::checkTargetTempShift(float newTargetTempShift)
@@ -164,11 +157,11 @@ void HeatingActuatorChannel::checkTargetTempShift(float newTargetTempShift)
     {
         case HvacMode::HVAC_COMFORT:
             if (ParamHTA_ChTargetTempShiftApplyToComfort)
-                _externTargetTempShift = newTargetTempShift;
+                setTargetTempShift(newTargetTempShift);
             break;
         case HvacMode::HVAC_NIGHT:
             if (ParamHTA_ChTargetTempShiftApplyToNight || ParamHTA_ChTargetTempShiftActionNight)
-                _externTargetTempShift = newTargetTempShift;
+                setTargetTempShift(newTargetTempShift);
 
             if (ParamHTA_ChTargetTempShiftActionNight)
                 _currentHvacMode = HvacMode::HVAC_COMFORT;
@@ -176,12 +169,169 @@ void HeatingActuatorChannel::checkTargetTempShift(float newTargetTempShift)
             break;
         case HvacMode::HVAC_STANDBY:
             if (ParamHTA_ChTargetTempShiftApplyToStandby || ParamHTA_ChTargetTempShiftActionStandby)
-                _externTargetTempShift = newTargetTempShift;
+                setTargetTempShift(newTargetTempShift);
 
             if (ParamHTA_ChTargetTempShiftActionStandby)
                 _currentHvacMode = HvacMode::HVAC_COMFORT;
             
             break;
+    }
+}
+
+void HeatingActuatorChannel::processScene(uint8_t sceneNumber)
+{
+    if (ParamHTA_ChSceneAActive &&
+        ParamHTA_ChSceneANumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneAChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneAHvacMode + 1));
+        if (ParamHTA_ChSceneAChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneAChangeTargetTempInput);
+        if (ParamHTA_ChSceneAChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneAChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneBActive &&
+             ParamHTA_ChSceneBNumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneBChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneBHvacMode + 1));
+        if (ParamHTA_ChSceneBChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneBChangeTargetTempInput);
+        if (ParamHTA_ChSceneBChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneBChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneCActive &&
+             ParamHTA_ChSceneCNumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneCChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneCHvacMode + 1));
+        if (ParamHTA_ChSceneCChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneCChangeTargetTempInput);
+        if (ParamHTA_ChSceneCChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneCChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneDActive &&
+             ParamHTA_ChSceneDNumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneDChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneDHvacMode + 1));
+        if (ParamHTA_ChSceneDChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneDChangeTargetTempInput);
+        if (ParamHTA_ChSceneDChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneDChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneEActive &&
+             ParamHTA_ChSceneENumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneEChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneEHvacMode + 1));
+        if (ParamHTA_ChSceneEChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneEChangeTargetTempInput);
+        if (ParamHTA_ChSceneEChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneEChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneFActive &&
+             ParamHTA_ChSceneFNumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneFChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneFHvacMode + 1));
+        if (ParamHTA_ChSceneFChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneFChangeTargetTempInput);
+        if (ParamHTA_ChSceneFChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneFChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneGActive &&
+             ParamHTA_ChSceneGNumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneGChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneGHvacMode + 1));
+        if (ParamHTA_ChSceneGChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneGChangeTargetTempInput);
+        if (ParamHTA_ChSceneGChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneGChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneHActive &&
+             ParamHTA_ChSceneHNumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneHChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneHHvacMode + 1));
+        if (ParamHTA_ChSceneHChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneHChangeTargetTempInput);
+        if (ParamHTA_ChSceneHChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneHChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneIActive &&
+             ParamHTA_ChSceneINumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneIChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneIHvacMode + 1));
+        if (ParamHTA_ChSceneIChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneIChangeTargetTempInput);
+        if (ParamHTA_ChSceneIChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneIChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneJActive &&
+             ParamHTA_ChSceneJNumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneJChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneJHvacMode + 1));
+        if (ParamHTA_ChSceneJChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneJChangeTargetTempInput);
+        if (ParamHTA_ChSceneJChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneJChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneKActive &&
+             ParamHTA_ChSceneKNumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneKChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneKHvacMode + 1));
+        if (ParamHTA_ChSceneKChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneKChangeTargetTempInput);
+        if (ParamHTA_ChSceneKChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneKChangeTargetTempShift);
+    }
+    else if (ParamHTA_ChSceneLActive &&
+             ParamHTA_ChSceneLNumber == sceneNumber)
+    {
+        if (ParamHTA_ChSceneLChangeHvacMode)
+            setHvacMode(static_cast<HvacMode>(ParamHTA_ChSceneLHvacMode + 1));
+        if (ParamHTA_ChSceneLChangeTargetTempInput)
+            setTargetTemp(ParamHTA_ChSceneLChangeTargetTempInput);
+        if (ParamHTA_ChSceneLChangeTargetTempShift)
+            setTargetTempShift(ParamHTA_ChSceneLChangeTargetTempShift);
+    }
+}
+
+void HeatingActuatorChannel::setHvacMode(HvacMode newHvacMode)
+{
+    if (_currentHvacMode != newHvacMode)
+    {
+        if (ParamHTA_ChTargetTempResetOnHvacModeChange)
+            _externTargetTemp = HTA_TEMPERATUR_INVALID;
+        if (ParamHTA_ChTargetTempShiftResetOnHvacModeChange)
+            _externTargetTempShift = HTA_TEMPERATUR_INVALID;
+
+        _currentHvacMode = newHvacMode;
+        logDebugP("checkHvacMode (_currentHvacMode=%u, newHvacMode=%u)", _currentHvacMode, newHvacMode);
+    }
+}
+
+void HeatingActuatorChannel::setTargetTemp(float newTargetTemp)
+{
+    if (_externTargetTemp != newTargetTemp)
+    {
+        _externTargetTemp = newTargetTemp;
+        
+        if (ParamHTA_ChTargetTempShiftResetOnNewTargetTemp)
+            setTargetTempShift(0);
+    }
+}
+
+void HeatingActuatorChannel::setTargetTempShift(float newTargetTempShift)
+{
+    if (_externTargetTempShift != newTargetTempShift)
+    {
+        _externTargetTempShift = newTargetTempShift;
     }
 }
 
@@ -389,7 +539,7 @@ void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float 
 
 void HeatingActuatorChannel::calculateNewSetValue()
 {
-    std::string debugLogMessage;
+    std::string debugLogMessage = "";
 
     // first check for possible enforced position
     float setValuePercent = HTA_POSITION_INVALID;
@@ -484,26 +634,39 @@ void HeatingActuatorChannel::calculateNewSetValue()
             }
         }
 
-        if (_externTargetTempShift != HTA_TEMPERATUR_INVALID)
-            targetTemp += _externTargetTempShift;
+        targetTemp += _externTargetTempShift;
 
         if (_currentTargetTemp != targetTemp)
         {
             _currentTargetTemp = targetTemp;
+            pid.setPoint(targetTemp);
 
             if (ParamHTA_ChTargetTempChangeSend)
                 KoHTA_ChTargetTempStatus.value(_currentTargetTemp, DPT_Value_Temp);
         }
 
-        //###ToDo: calculate PID value for _externRoomTemp vs. targetTemp
+        float newPidPositionPercent = HTA_POSITION_INVALID;
+        if (_externRoomTemp != HTA_TEMPERATUR_INVALID)
+        {
+            if (!pid.isRunning())
+                pid.start();
+
+            if (pid.compute(_externRoomTemp))
+                newPidPositionPercent = pid.getOutput();
+        }
 
 #ifdef OPENKNX_DEBUG
-        debugLogMessage = string_format("calculateNewSetValue: regulator (_currentHvacMode: %u, _externTargetTempShift: %.2f, targetTemp: %.2f)", _currentHvacMode, _externTargetTempShift, targetTemp);
+        if (newPidPositionPercent != HTA_POSITION_INVALID)
+            debugLogMessage = string_format("calculateNewSetValue: regulator (_currentHvacMode: %u, _externTargetTempShift: %.2f, targetTemp: %.2f, _targetPositionPercent: %.2f, newPidPositionPercent: %.2f)", _currentHvacMode, _externTargetTempShift, targetTemp, _targetPositionPercent, newPidPositionPercent);
 #endif
+
+        //if (newPidPositionPercent != HTA_POSITION_INVALID)
+        //    setValuePercent = newPidPositionPercent;
     }
 
 #ifdef OPENKNX_DEBUG
-    if (_lastDebugLogMessage != debugLogMessage)
+    if (debugLogMessage != "" &&
+        _lastDebugLogMessage != debugLogMessage)
     {
         logDebugP(debugLogMessage);
         _lastDebugLogMessage = debugLogMessage;
@@ -666,6 +829,10 @@ void HeatingActuatorChannel::setup(bool configured)
             _targetTempCyclicSendTimer = delayTimerInit();
         if (ParamHTA_ChManualModeChangeSend && ParamHTA_ChManualModeCyclicTimeMS > 0)
             _manualModeCyclicSendTimer = delayTimerInit();
+
+        pid.setOutputRange(0, 1);
+        pid.setInterval(100);
+        pid.setK(5, 0.5, 0);
     }
 }
 
