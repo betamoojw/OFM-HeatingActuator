@@ -93,18 +93,36 @@ void HeatingActuatorChannel::processInputKo(GroupObject &ko)
 
 void HeatingActuatorChannel::checkOperationMode()
 {
+    bool newOperationModeHeating = false;
     if (ParamHTA_OperationMode == HTA_OPERATION_MODE_HEATING ||
         ParamHTA_ChOperationMode == HTA_OPERATION_MODE_HEATING)
-        _currentOperationModeHeating = true;
+        newOperationModeHeating = true;
     else if (ParamHTA_OperationMode == HTA_OPERATION_MODE_COOLING ||
              ParamHTA_ChOperationMode == HTA_OPERATION_MODE_COOLING)
-        _currentOperationModeHeating = false;
+             newOperationModeHeating = false;
     else
     {
         if (ParamHTA_OperationModeChange == HTA_OPERATION_MODE_CHANGE_OBJECT_HEATING_COOLING)
-            _currentOperationModeHeating = KoHTA_OperationMode.value(DPT_Switch);
+            newOperationModeHeating = KoHTA_OperationMode.value(DPT_Switch);
         else
-            _currentOperationModeHeating = !KoHTA_SummerWinter.value(DPT_Switch);
+            newOperationModeHeating = !KoHTA_SummerWinter.value(DPT_Switch);
+    }
+
+    setOperationMode(newOperationModeHeating);
+}
+
+void HeatingActuatorChannel::setOperationMode(bool newOperationModeHeating)
+{
+    if (_currentOperationModeHeating != newOperationModeHeating)
+    {
+        if (pid.isRunning())
+        {
+            pid.stop();
+            pid.reset();
+        }
+
+        _currentOperationModeHeating = newOperationModeHeating;
+        logDebugP("setOperationMode (_currentOperationModeHeating=%u, newOperationModeHeating=%u)", _currentOperationModeHeating, newOperationModeHeating);
     }
 }
 
@@ -312,7 +330,7 @@ void HeatingActuatorChannel::setHvacMode(HvacMode newHvacMode)
             _externTargetTempShift = HTA_TEMPERATUR_INVALID;
 
         _currentHvacMode = newHvacMode;
-        logDebugP("checkHvacMode (_currentHvacMode=%u, newHvacMode=%u)", _currentHvacMode, newHvacMode);
+        logDebugP("setHvacMode (_currentHvacMode=%u, newHvacMode=%u)", _currentHvacMode, newHvacMode);
     }
 }
 
@@ -649,19 +667,35 @@ void HeatingActuatorChannel::calculateNewSetValue()
         if (_externRoomTemp != HTA_TEMPERATUR_INVALID)
         {
             if (!pid.isRunning())
+            {
+                if (_currentOperationModeHeating)
+                {
+                    pid.setInterval(ParamHTA_ChHeatingPidInterval);
+                    pid.setK(ParamHTA_ChHeatingPidP, ParamHTA_ChHeatingPidI / (float)10, ParamHTA_ChHeatingPidD / (float)10);
+                }
+                else
+                {
+                    pid.setInterval(ParamHTA_ChCoolingPidInterval);
+                    pid.setK(ParamHTA_ChCoolingPidP, ParamHTA_ChCoolingPidI / (float)10, ParamHTA_ChCoolingPidD / (float)10);
+                }
+
+                pid.setOutputRange(0, 255);
                 pid.start();
 
+                logDebugP("calculateNewSetValue: regulator PID initialized (P: %.2f, I: %.2f, D: %.2f, interval: %u)", pid.getKp(), pid.getKi(), pid.getKd(), pid.getInterval());
+            }
+
             if (pid.compute(_externRoomTemp))
-                newPidPositionPercent = pid.getOutput();
+                newPidPositionPercent = pid.getOutput() / 255;
         }
 
 #ifdef OPENKNX_DEBUG
         if (newPidPositionPercent != HTA_POSITION_INVALID)
-            debugLogMessage = string_format("calculateNewSetValue: regulator (_currentHvacMode: %u, _externTargetTempShift: %.2f, targetTemp: %.2f, _targetPositionPercent: %.2f, newPidPositionPercent: %.2f)", _currentHvacMode, _externTargetTempShift, targetTemp, _targetPositionPercent, newPidPositionPercent);
+            debugLogMessage = string_format("calculateNewSetValue: regulator (_currentHvacMode: %u, _externTargetTempShift: %.2f, targetTemp: %.2f, _externRoomTemp: %.2f, _targetPositionPercent: %.2f, newPidPositionPercent: %.2f)", _currentHvacMode, _externTargetTempShift, targetTemp, _externRoomTemp, _targetPositionPercent, newPidPositionPercent);
 #endif
 
-        //if (newPidPositionPercent != HTA_POSITION_INVALID)
-        //    setValuePercent = newPidPositionPercent;
+        if (newPidPositionPercent != HTA_POSITION_INVALID)
+           setValuePercent = newPidPositionPercent;
     }
 
 #ifdef OPENKNX_DEBUG
@@ -685,7 +719,8 @@ void HeatingActuatorChannel::calculateNewSetValue()
         else
         {
             bool moveValveRequestSuccess = moveValveToPosition(setValuePercent);
-            if (moveValveRequestSuccess && ParamHTA_ChSetValueChangeSend)
+            //if (moveValveRequestSuccess && ParamHTA_ChSetValueChangeSend)
+            if (ParamHTA_ChSetValueChangeSend) // always output set value for now independent of motor connected
             {
                 if (_currentOperationModeHeating)
                     KoHTA_ChSetValueStatusHeating.value(_targetPositionPercent, DPT_Scaling);
@@ -829,10 +864,6 @@ void HeatingActuatorChannel::setup(bool configured)
             _targetTempCyclicSendTimer = delayTimerInit();
         if (ParamHTA_ChManualModeChangeSend && ParamHTA_ChManualModeCyclicTimeMS > 0)
             _manualModeCyclicSendTimer = delayTimerInit();
-
-        pid.setOutputRange(0, 1);
-        pid.setInterval(100);
-        pid.setK(5, 0.5, 0);
     }
 }
 

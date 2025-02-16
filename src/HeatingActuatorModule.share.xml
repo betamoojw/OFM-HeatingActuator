@@ -47,6 +47,12 @@
               <ParameterType Id="%AID%_PT-Proportional" Name="Proportional">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="20" />
               </ParameterType>
+              <ParameterType Id="%AID%_PT-PidValue" Name="PidValue">
+                <TypeNumber SizeInBit="16" Type="unsignedInt" minInclusive="0" maxInclusive="65535" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-PidInterval" Name="PidValue">
+                <TypeNumber SizeInBit="16" Type="unsignedInt" minInclusive="50" maxInclusive="65535" />
+              </ParameterType>
               <ParameterType Id="%AID%_PT-ResetTime" Name="ResetTime">
                 <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="1" maxInclusive="255" />
               </ParameterType>

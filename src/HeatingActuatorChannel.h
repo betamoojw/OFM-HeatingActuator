@@ -88,6 +88,7 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     void checkTargetTempShift(float newTargetTempShift);
     void processScene(uint8_t sceneNumber);
 
+    void setOperationMode(bool newOperationModeHeating);
     void setHvacMode(HvacMode hvacMode);
     void setTargetTemp(float newTargetTemp);
     void setTargetTempShift(float newTargetTempShift);

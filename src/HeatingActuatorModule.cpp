@@ -343,7 +343,8 @@ void HeatingActuatorModule::showHelp()
     openknx.console.printHelpLine("hta ch NN cls", "Close valve (run clockwise) of channel index NN (zero-based).");
     openknx.console.printHelpLine("hta ch NN cal", "Start motor calibration for channel index NN (zero-based).");
     openknx.console.printHelpLine("hta ch NN MMM", "Move valve of channel index NN (zero-based) to position MMM (0-100 %).");
-    openknx.console.printHelpLine("hta ch stop", "Stop all motors (only one running at the same time).");
+    openknx.console.printHelpLine("hta ch NN info", "Information and state of channel index NN (zero-based).");
+    openknx.console.printHelpLine("hta stop", "Stop all motors (only one running at the same time).");
 }
 
 bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseKo)
@@ -365,8 +366,13 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
         openknx.console.writeDiagenoseKo("");
         openknx.console.writeDiagenoseKo("-> ch NN info");
         openknx.console.writeDiagenoseKo("");
-        openknx.console.writeDiagenoseKo("-> ch stop");
+        openknx.console.writeDiagenoseKo("-> stop");
         openknx.console.writeDiagenoseKo("");
+    }
+    else if (cmd.length() == 8 && cmd.substr(4, 4) == "stop")
+    {
+        stopMotor();
+        result = true;
     }
     else if (cmd.length() > 7 && cmd.substr(4, 2) == "ch")
     {
@@ -392,11 +398,6 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
         {
             uint8_t channelIndex = stoi(cmd.substr(7, 2));
             _channel[channelIndex]->logChannelInfo(diagnoseKo);
-            result = true;
-        }
-        else if (cmd.length() == 11 && cmd.substr(7, 4) == "stop")
-        {
-            stopMotor();
             result = true;
         }
         else if (cmd.length() > 10)
