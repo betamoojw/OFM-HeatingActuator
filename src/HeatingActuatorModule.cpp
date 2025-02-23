@@ -40,6 +40,7 @@ void HeatingActuatorModule::processInputKo(GroupObject &ko)
 
 void HeatingActuatorModule::setup(bool configured)
 {
+#ifdef OPENKNX_GPIO_NUM
     for (uint8_t i = 0; i < OPENKNX_HTA_CHANNEL_COUNT; i++)
     {
         openknxGPIOModule.pinMode(0x0100 + i, OUTPUT);
@@ -47,6 +48,13 @@ void HeatingActuatorModule::setup(bool configured)
 
         openknxGPIOModule.pinMode(0x0200 + i, INPUT);
     }
+#else
+// Wire is initialized by GPIO module, when used
+OPENKNX_GPIO_WIRE.setSDA(OPENKNX_GPIO_SDA);
+OPENKNX_GPIO_WIRE.setSCL(OPENKNX_GPIO_SCL);
+OPENKNX_GPIO_WIRE.begin();
+OPENKNX_GPIO_WIRE.setClock(OPENKNX_GPIO_CLOCK);
+#endif
 
 #ifdef OPENKNX_GPIO_WIRE
     if (ina.begin())

@@ -1,6 +1,10 @@
 #pragma once
 #include "OpenKNX.h"
+
+#ifdef OPENKNX_GPIO_NUM
 #include "GPIOModule.h"
+#endif
+
 #include "HeatingActuatorChannel.h"
 #include "hardware.h"
 #include "knxprod.h"
