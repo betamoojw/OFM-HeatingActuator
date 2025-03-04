@@ -428,7 +428,8 @@ void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float 
     processInput();
 
     if (_targetPositionPercent != HTA_POSITION_INVALID &&
-        ParamHTA_ChSetValueChangeSend && delayCheck(_setValueCyclicSendTimer, ParamHTA_ChSetValueCyclicTimeMS))
+        ParamHTA_ChSetValueChangeSend && _setValueCyclicSendTimer > 0 &&
+        delayCheck(_setValueCyclicSendTimer, ParamHTA_ChSetValueCyclicTimeMS))
     {
         if (_currentOperationModeHeating)
             KoHTA_ChSetValueStatusHeating.value(_targetPositionPercent, DPT_Scaling);
@@ -439,13 +440,15 @@ void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float 
     }
     
     if (_currentTargetTemp != HTA_TEMPERATUR_INVALID &&
-        ParamHTA_ChTargetTempChangeSend && delayCheck(_targetTempCyclicSendTimer, ParamHTA_ChTargetTempCyclicTimeMS))
+        ParamHTA_ChTargetTempChangeSend && _targetTempCyclicSendTimer > 0 &&
+        delayCheck(_targetTempCyclicSendTimer, ParamHTA_ChTargetTempCyclicTimeMS))
     {
         KoHTA_ChTargetTempStatus.value(_currentTargetTemp, DPT_Value_Temp);
         _targetTempCyclicSendTimer = delayTimerInit();
     }
     
-    if (ParamHTA_ChManualModeChangeSend && delayCheck(_manualModeCyclicSendTimer, ParamHTA_ChManualModeCyclicTimeMS))
+    if (ParamHTA_ChManualModeChangeSend && _manualModeCyclicSendTimer > 0 &&
+        delayCheck(_manualModeCyclicSendTimer, ParamHTA_ChManualModeCyclicTimeMS))
     {
         KoHTA_ChManualModeStatus.value(_currentManualMode, DPT_Switch);
         _manualModeCyclicSendTimer = delayTimerInit();
