@@ -387,12 +387,14 @@ bool HeatingActuatorModule::processCommand(const std::string cmd, bool diagnoseK
         if (cmd.length() == 13 && cmd.substr(10, 3) == "opn")
         {
             uint8_t channelIndex = stoi(cmd.substr(7, 2));
+            _channel[channelIndex]->setTargetPosition(HTA_POSITION_FULLY_OPEN);
             runMotor(channelIndex, true);
             result = true;
         }
         else if (cmd.length() == 13 && cmd.substr(10, 3) == "cls")
         {
             uint8_t channelIndex = stoi(cmd.substr(7, 2));
+            _channel[channelIndex]->setTargetPosition(HTA_POSITION_FULLY_CLOSED);
             runMotor(channelIndex, false);
             result = true;
         }

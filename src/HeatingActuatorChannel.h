@@ -4,6 +4,9 @@
 #include "FormatHelper.cpp"
 
 #define HTA_POSITION_INVALID -1
+#define HTA_POSITION_FULLY_CLOSED 0
+#define HTA_POSITION_FULLY_OPEN 1
+
 #define HTA_TEMPERATUR_INVALID -127
 #define HTA_SCENE_INVALID 255
 
@@ -44,6 +47,7 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     uint8_t getSetValueTarget();
     void startCalibration();
     bool moveValveToPosition(float targetPositionPercent);
+    void setTargetPosition(float targetPositionPercent);
 
     void savePower();
     bool restorePower();
@@ -110,7 +114,6 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     uint32_t _calibratedDriveOpenTime = 0;
     uint32_t _calibratedDriveCloseTime = 0;
 
-    // 0 % = fully closed, 1 = fully open
     float _currentPositionPercent = HTA_POSITION_INVALID;
     float _targetPositionPercent = HTA_POSITION_INVALID;
 

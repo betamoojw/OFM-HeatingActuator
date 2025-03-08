@@ -406,12 +406,25 @@ bool HeatingActuatorChannel::moveValveToPosition(float targetPositionPercent)
     }
     
     logInfoP("Moving to position (_currentPositionPercent=%.2f, targetPositionPercent=%.2f)", _currentPositionPercent, targetPositionPercent);
-    _targetPositionPercent = targetPositionPercent;
+    setTargetPosition(targetPositionPercent);
 
     bool open = _currentPositionPercent < _targetPositionPercent;
     openknxHeatingActuatorModule.runMotor(_channelIndex, open);
     
     return true;
+}
+
+void HeatingActuatorChannel::setTargetPosition(float targetPositionPercent)
+{
+    _targetPositionPercent = targetPositionPercent;
+
+    if (ParamHTA_ChSetValueChangeSend)
+    {
+        if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN || _currentOperationModeHeating)
+            KoHTA_ChSetValueStatusHeatingOrExtern.value(_targetPositionPercent * 100, DPT_Scaling);
+        else
+            KoHTA_ChSetValueStatusCooling.value(_targetPositionPercent * 100, DPT_Scaling);
+    }
 }
 
 void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float current, float currentLast)
@@ -431,10 +444,10 @@ void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float 
         ParamHTA_ChSetValueChangeSend && _setValueCyclicSendTimer > 0 &&
         delayCheck(_setValueCyclicSendTimer, ParamHTA_ChSetValueCyclicTimeMS))
     {
-        if (_currentOperationModeHeating)
-            KoHTA_ChSetValueStatusHeating.value(_targetPositionPercent, DPT_Scaling);
+        if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN || _currentOperationModeHeating)
+            KoHTA_ChSetValueStatusHeatingOrExtern.value(_targetPositionPercent * 100, DPT_Scaling);
         else
-            KoHTA_ChSetValueStatusCooling.value(_targetPositionPercent, DPT_Scaling);
+            KoHTA_ChSetValueStatusCooling.value(_targetPositionPercent * 100, DPT_Scaling);
 
         _setValueCyclicSendTimer = delayTimerInit();
     }
@@ -468,7 +481,7 @@ void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float 
             openknxHeatingActuatorModule.stopMotor();
         }
 
-        if (currentCount >= 100 &&
+        if (currentCount >= 500 &&
             currentLast > 0)
         {
             uint8_t motorMaxCurrent = _motorState == MotorState::MOT_OPENING ? ParamHTA_ChMotorMaxCurrentOpen : ParamHTA_ChMotorMaxCurrentClose;
@@ -480,7 +493,7 @@ void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float 
                 else
                     _currentPositionPercent = 0;
 
-                logDebugP("STOP (current: %.2f, last: %.2f, limit: %.2f, _currentPositionPercent: %.2f)", current, currentLast, motorMaxCurrent, _currentPositionPercent);
+                logDebugP("STOP (current: %.2f, last: %.2f, limit: %u, _currentPositionPercent: %.2f)", current, currentLast, motorMaxCurrent, _currentPositionPercent);
                 openknxHeatingActuatorModule.stopMotor();
             }
         }
@@ -568,13 +581,13 @@ void HeatingActuatorChannel::calculateNewSetValue()
         _externEnforcedPosition)
     {
         if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
-            setValuePercent = ParamHTA_ChEnforcedSetValueHeatingOrExtern;
+            setValuePercent = ParamHTA_ChEnforcedSetValueHeatingOrExtern / (float)100;
         else
         {
             if (_currentOperationModeHeating)
-                setValuePercent = ParamHTA_ChEnforcedSetValueHeatingOrExtern;
+                setValuePercent = ParamHTA_ChEnforcedSetValueHeatingOrExtern / (float)100;
             else
-                setValuePercent = ParamHTA_ChEnforcedSetValueCooling;
+                setValuePercent = ParamHTA_ChEnforcedSetValueCooling / (float)100;
         }
 
 #ifdef OPENKNX_DEBUG
@@ -598,13 +611,13 @@ void HeatingActuatorChannel::calculateNewSetValue()
         delayCheck(_lastExternValue, ParamHTA_ChEmergencyModeDelayTimeMS))
     {
         if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
-            setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern;
+            setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern / (float)100;
         else
         {
             if (_currentOperationModeHeating)
-                setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern;
+                setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern / (float)100;
             else
-                setValuePercent = ParamHTA_ChEmergencyModeSetValueCooling;
+                setValuePercent = ParamHTA_ChEmergencyModeSetValueCooling / (float)100;
         }
 
 #ifdef OPENKNX_DEBUG
@@ -720,17 +733,7 @@ void HeatingActuatorChannel::calculateNewSetValue()
                 startCalibration();
         }
         else
-        {
-            bool moveValveRequestSuccess = moveValveToPosition(setValuePercent);
-            //if (moveValveRequestSuccess && ParamHTA_ChSetValueChangeSend)
-            if (ParamHTA_ChSetValueChangeSend) // always output set value for now independent of motor connected
-            {
-                if (_currentOperationModeHeating)
-                    KoHTA_ChSetValueStatusHeating.value(_targetPositionPercent, DPT_Scaling);
-                else
-                    KoHTA_ChSetValueStatusCooling.value(_targetPositionPercent, DPT_Scaling);
-            }
-        }
+            moveValveToPosition(setValuePercent);
     }
 }
 
@@ -911,6 +914,7 @@ void HeatingActuatorChannel::logChannelInfo(bool diagnoseKo)
 
     logInfoP("_currentPositionPercent: %.2f", _currentPositionPercent);
     logInfoP("_targetPositionPercent: %.2f", _targetPositionPercent);
+    logInfoP("_calibrationState: %u", _calibrationState);
     logInfoP("_calibratedDriveOpenTime: %u", _calibratedDriveOpenTime);
     logInfoP("_calibratedDriveCloseTime: %u", _calibratedDriveCloseTime);
     logInfoP("_externEnforcedPosition: %u", _externEnforcedPosition);
@@ -922,6 +926,8 @@ void HeatingActuatorChannel::logChannelInfo(bool diagnoseKo)
         openknx.console.writeDiagnoseKo("HTA cur %.2f", _currentPositionPercent);
         openknx.console.writeDiagnoseKo("");
         openknx.console.writeDiagnoseKo("HTA tar %.2f", _targetPositionPercent);
+        openknx.console.writeDiagnoseKo("");
+        openknx.console.writeDiagnoseKo("HTA cal %u", _calibrationState);
         openknx.console.writeDiagnoseKo("");
         openknx.console.writeDiagnoseKo("HTA calo %u", _calibratedDriveOpenTime);
         openknx.console.writeDiagnoseKo("");
