@@ -358,6 +358,9 @@ void HeatingActuatorChannel::setHvacMode(HvacMode newHvacMode)
         if (ParamHTA_ChTargetTempShiftResetOnHvacModeChange)
             _externTargetTempShift = HTA_TEMPERATUR_INVALID;
 
+        if ((uint8_t)KoHTA_ChHvacModeStatus.value(DPT_HVACMode) != newHvacMode)
+            KoHTA_ChHvacModeStatus.value(newHvacMode, DPT_HVACMode);
+        
         _currentHvacMode = newHvacMode;
         logDebugP("setHvacMode (_currentHvacMode=%u, newHvacMode=%u)", _currentHvacMode, newHvacMode);
     }
@@ -504,14 +507,12 @@ void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float 
     }
     
     if (ParamHTA_ChEmergencyModeChangeSend &&
-        ((bool)KoHTA_ChEmergencyModeStatus.value(DPT_Switch) != _currentEmergencyMode ||
-         _EmergencyModeCyclicSendTimer > 0 && delayCheck(_EmergencyModeCyclicSendTimer, ParamHTA_ChEmergencyModeCyclicTimeMS)))
+        _emergencyModeCyclicSendTimer > 0 && delayCheck(_emergencyModeCyclicSendTimer, ParamHTA_ChEmergencyModeCyclicTimeMS))
     {
         KoHTA_ChEmergencyModeStatus.value(_currentEmergencyMode, DPT_Switch);
-        _EmergencyModeCyclicSendTimer = delayTimerInit();
+        _emergencyModeCyclicSendTimer = delayTimerInit();
     }
 
-    
     if (ParamHTA_ChManualModeChangeSend &&
         ((bool)KoHTA_ChManualModeStatus.value(DPT_Switch) != _currentManualMode ||
          _manualModeCyclicSendTimer > 0 && delayCheck(_manualModeCyclicSendTimer, ParamHTA_ChManualModeCyclicTimeMS)))
@@ -628,6 +629,9 @@ void HeatingActuatorChannel::calculateNewSetValue()
 {
     std::string debugLogMessage = "";
 
+    //check if emergency mode should be active
+    checkEmergencyMode();
+
     // first check for possible enforced position
     float setValuePercent = HTA_POSITION_INVALID;
     if (ParamHTA_ChEnforcedPosition &&
@@ -659,11 +663,9 @@ void HeatingActuatorChannel::calculateNewSetValue()
         debugLogMessage = string_format("calculateNewSetValue: manual mode (_currentManualModeOn: %u, setValuePercent: %.2f)", _currentManualModeOn, setValuePercent);
 #endif
     }
-    // check if emergency mode should be active
-    else if ()
+    // check if emergency mode is active
+    else if (_currentEmergencyMode)
     {
-        _currentEmergencyMode = true;
-
         if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
             setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern / (float)100;
         else
