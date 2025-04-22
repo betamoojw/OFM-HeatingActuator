@@ -94,6 +94,10 @@ void HeatingActuatorChannel::processInputKo(GroupObject &ko)
             if ((bool)KoHTA_ChTargetTempLockCoolingStatus.value(DPT_Switch) != (bool)ko.value(DPT_Switch))
                 KoHTA_ChTargetTempLockCoolingStatus.value(ko.value(DPT_Switch), DPT_Switch);
             break;
+        case HTA_KoChManualMode:
+            _currentManualMode = ko.value(DPT_Switch);
+            logDebugP("HTA_KoChManualMode: %u", _currentManualMode);
+            break;
         case HTA_KoChScene:
             if ((uint8_t)ko.value(Dpt(18, 1, 0)) == 0)
                 processScene(ko.value(Dpt(18, 1, 1)));
@@ -484,8 +488,9 @@ void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float 
         _targetTempCyclicSendTimer = delayTimerInit();
     }
     
-    if (ParamHTA_ChManualModeChangeSend && _manualModeCyclicSendTimer > 0 &&
-        delayCheck(_manualModeCyclicSendTimer, ParamHTA_ChManualModeCyclicTimeMS))
+    if (ParamHTA_ChManualModeChangeSend &&
+        ((bool)KoHTA_ChManualModeStatus.value(DPT_Switch) != _currentManualMode ||
+         _manualModeCyclicSendTimer > 0 && delayCheck(_manualModeCyclicSendTimer, ParamHTA_ChManualModeCyclicTimeMS)))
     {
         KoHTA_ChManualModeStatus.value(_currentManualMode, DPT_Switch);
         _manualModeCyclicSendTimer = delayTimerInit();
