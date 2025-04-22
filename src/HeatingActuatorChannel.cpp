@@ -84,6 +84,16 @@ void HeatingActuatorChannel::processInputKo(GroupObject &ko)
         case HTA_KoChHvacModeInputProtect:
             checkHvacMode();
             break;
+        case HTA_KoChTargetTempLockHeating:
+            logDebugP("HTA_KoChLockHeating: %u", ko.value(DPT_Switch));
+            if ((bool)KoHTA_ChTargetTempLockHeatingStatus.value(DPT_Switch) != (bool)ko.value(DPT_Switch))
+                KoHTA_ChTargetTempLockHeatingStatus.value(ko.value(DPT_Switch), DPT_Switch);
+            break;
+        case HTA_KoChTargetTempLockCooling:
+            logDebugP("HTA_KoChLockCooling: %u", ko.value(DPT_Switch));
+            if ((bool)KoHTA_ChTargetTempLockCoolingStatus.value(DPT_Switch) != (bool)ko.value(DPT_Switch))
+                KoHTA_ChTargetTempLockCoolingStatus.value(ko.value(DPT_Switch), DPT_Switch);
+            break;
         case HTA_KoChScene:
             if ((uint8_t)ko.value(Dpt(18, 1, 0)) == 0)
                 processScene(ko.value(Dpt(18, 1, 1)));
@@ -336,6 +346,13 @@ void HeatingActuatorChannel::setHvacMode(HvacMode newHvacMode)
 
 void HeatingActuatorChannel::setTargetTemp(float newTargetTemp)
 {
+    if (_currentOperationModeHeating && KoHTA_ChTargetTempLockHeating.value(DPT_Switch) ||
+        !_currentOperationModeHeating && KoHTA_ChTargetTempLockCooling.value(DPT_Switch))
+    {
+        logDebugP("Target temperature locked, ignore setTargetTemp.");
+        return;
+    }
+
     if (_externTargetTemp != newTargetTemp)
     {
         _externTargetTemp = newTargetTemp;
@@ -347,6 +364,13 @@ void HeatingActuatorChannel::setTargetTemp(float newTargetTemp)
 
 void HeatingActuatorChannel::setTargetTempShift(float newTargetTempShift)
 {
+    if (_currentOperationModeHeating && KoHTA_ChTargetTempLockHeating.value(DPT_Switch) ||
+        !_currentOperationModeHeating && KoHTA_ChTargetTempLockCooling.value(DPT_Switch))
+    {
+        logDebugP("Target temperature locked, ignore setTargetTempShift.");
+        return;
+    }
+
     if (_externTargetTempShift != newTargetTempShift)
     {
         _externTargetTempShift = newTargetTempShift;
