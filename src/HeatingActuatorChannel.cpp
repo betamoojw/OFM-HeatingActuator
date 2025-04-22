@@ -210,6 +210,21 @@ void HeatingActuatorChannel::checkTargetTempShift(float newTargetTempShift)
     }
 }
 
+void HeatingActuatorChannel::checkEmergencyMode()
+{
+    bool newEmergencyMode =
+        ParamHTA_ChEmergencyMode &&
+        delayCheck(_lastExternValue, ParamHTA_ChEmergencyModeDelayTimeMS);
+
+    if (_currentEmergencyMode != newEmergencyMode)
+    {
+        _currentEmergencyMode = newEmergencyMode;
+        logDebugP("checkEmergencyMode (_currentEmergencyMode=%u, newEmergencyMode=%u)", _currentEmergencyMode, newEmergencyMode);
+
+        KoHTA_ChEmergencyModeStatus.value(_currentEmergencyMode, DPT_Switch);
+    }
+}
+
 void HeatingActuatorChannel::processScene(uint8_t sceneNumber)
 {
     if (ParamHTA_ChSceneAActive &&
@@ -488,6 +503,15 @@ void HeatingActuatorChannel::loop(bool motorPower, uint32_t currentCount, float 
         _targetTempCyclicSendTimer = delayTimerInit();
     }
     
+    if (ParamHTA_ChEmergencyModeChangeSend &&
+        ((bool)KoHTA_ChEmergencyModeStatus.value(DPT_Switch) != _currentEmergencyMode ||
+         _EmergencyModeCyclicSendTimer > 0 && delayCheck(_EmergencyModeCyclicSendTimer, ParamHTA_ChEmergencyModeCyclicTimeMS)))
+    {
+        KoHTA_ChEmergencyModeStatus.value(_currentEmergencyMode, DPT_Switch);
+        _EmergencyModeCyclicSendTimer = delayTimerInit();
+    }
+
+    
     if (ParamHTA_ChManualModeChangeSend &&
         ((bool)KoHTA_ChManualModeStatus.value(DPT_Switch) != _currentManualMode ||
          _manualModeCyclicSendTimer > 0 && delayCheck(_manualModeCyclicSendTimer, ParamHTA_ChManualModeCyclicTimeMS)))
@@ -636,9 +660,10 @@ void HeatingActuatorChannel::calculateNewSetValue()
 #endif
     }
     // check if emergency mode should be active
-    else if (ParamHTA_ChEmergencyMode &&
-        delayCheck(_lastExternValue, ParamHTA_ChEmergencyModeDelayTimeMS))
+    else if ()
     {
+        _currentEmergencyMode = true;
+
         if (ParamHTA_ChControlMode == HTA_CONTROL_MODE_EXTERN)
             setValuePercent = ParamHTA_ChEmergencyModeSetValueHeatingOrExtern / (float)100;
         else

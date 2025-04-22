@@ -90,6 +90,7 @@ class HeatingActuatorChannel : public OpenKNX::Channel
     void checkOperationMode();
     void checkHvacMode();
     void checkTargetTempShift(float newTargetTempShift);
+    void checkEmergencyMode();
     void processScene(uint8_t sceneNumber);
 
     void setOperationMode(bool newOperationModeHeating);
@@ -104,6 +105,7 @@ class HeatingActuatorChannel : public OpenKNX::Channel
 
     uint32_t _setValueCyclicSendTimer = 0;
     uint32_t _targetTempCyclicSendTimer = 0;
+    uint32_t _emergencyModeCyclicSendTimer = 0;
     uint32_t _manualModeCyclicSendTimer = 0;
 
     MotorState _motorState = MotorState::MOT_IDLE;
@@ -128,6 +130,8 @@ class HeatingActuatorChannel : public OpenKNX::Channel
 
     float _currentTargetTemp = HTA_TEMPERATUR_INVALID;
     PID_RT pid;
+
+    bool _currentEmergencyMode = false;
 
     bool _currentOperationModeHeating = true;
     HvacMode _currentHvacMode = HvacMode::HVAC_NONE;

@@ -75,17 +75,20 @@
                 <Parameter Id="%AID%_UP-%TT%%CC%039" Name="Ch%C%EnforcedSetValueHeatingOrExtern" ParameterType="%AID%_PT-Percent" Offset="1" BitOffset="0" Text="Stellwert Zwangsstellung Heizen" Value="50" SuffixText="%" />
                 <Parameter Id="%AID%_UP-%TT%%CC%040" Name="Ch%C%EnforcedSetValueCooling" ParameterType="%AID%_PT-Percent" Offset="2" BitOffset="0" Text="Stellwert Zwangsstellung Kühlen" Value="50" SuffixText="%" />
               </Union>
-              <Union SizeInBit="40">
+              <Union SizeInBit="56">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="26" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%051" Name="Ch%C%EmergencyMode" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Notbetrieb aktivieren" Value="0" />
-                <!-- 7 bits free -->
+                <Parameter Id="%AID%_UP-%TT%%CC%064" Name="Ch%C%EmergencyModeChangeSend" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="1" Text="Manueller Betrieb senden" Value="0" />
+                <!-- 6 bits free -->
                 <Parameter Id="%AID%_UP-%TT%%CC%029" Name="Ch%C%EmergencyModeDelayBase" ParameterType="%AID%_PT-DelayBase" Offset="1" BitOffset="0" Text="Zeitbasis" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%%CC%030" Name="Ch%C%EmergencyModeDelayTime" ParameterType="%AID%_PT-DelayTime" Offset="1" BitOffset="2" Text="Zeit" Value="30" />
                 <Parameter Id="%AID%_UP-%TT%%CC%031" Name="Ch%C%EmergencyModeSetValueHeatingOrExtern" ParameterType="%AID%_PT-Percent" Offset="3" BitOffset="0" Text="Stellwert Notbetrieb Heizen" Value="50" SuffixText="%" />
                 <Parameter Id="%AID%_UP-%TT%%CC%032" Name="Ch%C%EmergencyModeSetValueCooling" ParameterType="%AID%_PT-Percent" Offset="4" BitOffset="0" Text="Stellwert Notbetrieb Kühlen" Value="50" SuffixText="%" />
+                <Parameter Id="%AID%_UP-%TT%%CC%065" Name="Ch%C%EmergencyModeCyclicBase" ParameterType="%AID%_PT-DelayBase" Offset="5" BitOffset="0" Text="Zeitbasis" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%066" Name="Ch%C%EmergencyModeCyclicTime" ParameterType="%AID%_PT-DelayTime" Offset="5" BitOffset="2" Text="Zeit" Value="0" />
               </Union>
               <Union SizeInBit="56">
-                <Memory CodeSegment="%AID%_RS-04-00000" Offset="31" BitOffset="0" />
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="33" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%042" Name="Ch%C%ManualMode" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Manueller Betrieb aktivieren" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%043" Name="Ch%C%ManualModeChangeSend" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="1" Text="Manueller Betrieb senden" Value="0" />
                 <!-- 4 bits free -->
@@ -98,17 +101,17 @@
                 <Parameter Id="%AID%_UP-%TT%%CC%050" Name="Ch%C%ManualModeChangeToAutoTime" ParameterType="%AID%_PT-DelayTime" Offset="5" BitOffset="2" Text="Zeit" Value="0" />
               </Union>
               <Union SizeInBit="16">
-                <Memory CodeSegment="%AID%_RS-04-00000" Offset="38" BitOffset="0" />
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="40" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%041" Name="Ch%C%MotorMaxCurrentClose" ParameterType="%AID%_PT-MaxCurrent" Offset="0" BitOffset="0" Text="Max. Stromstärke Schließen" Value="50" SuffixText="mA" />
                 <Parameter Id="%AID%_UP-%TT%%CC%053" Name="Ch%C%MotorMaxCurrentOpen" ParameterType="%AID%_PT-MaxCurrent" Offset="1" BitOffset="0" Text="Max. Stromstärke Öffnen" Value="30" SuffixText="mA" />
               </Union>
               <Union SizeInBit="8">
-                <Memory CodeSegment="%AID%_RS-04-00000" Offset="40" BitOffset="0" />
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="42" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%055" Name="Ch%C%ScenesActive" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Szenen aktivieren" Value="0" />
                 <!-- 7 bits free -->
               </Union>
               <Union SizeInBit="128">
-                <Memory CodeSegment="%AID%_RS-04-00000" Offset="41" BitOffset="0" />
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="43" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%056" Name="Ch%C%HeatingPidP" ParameterType="%AID%_PT-PidValue" Offset="0" BitOffset="0" Text="PID-Controller: P" Value="4" />
                 <Parameter Id="%AID%_UP-%TT%%CC%057" Name="Ch%C%HeatingPidI" ParameterType="%AID%_PT-PidValue" Offset="2" BitOffset="0" Text="PID-Controller: I" Value="1500" SuffixText="/ 10" />
                 <Parameter Id="%AID%_UP-%TT%%CC%058" Name="Ch%C%HeatingPidD" ParameterType="%AID%_PT-PidValue" Offset="4" BitOffset="0" Text="PID-Controller: D" Value="0" SuffixText="/ 10" />
@@ -189,6 +192,9 @@
               <ParameterRef Id="%AID%_UP-%TT%%CC%061_R-%TT%%CC%06101" RefId="%AID%_UP-%TT%%CC%061" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%062_R-%TT%%CC%06201" RefId="%AID%_UP-%TT%%CC%062" />
               <ParameterRef Id="%AID%_UP-%TT%%CC%063_R-%TT%%CC%06301" RefId="%AID%_UP-%TT%%CC%063" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%064_R-%TT%%CC%06401" RefId="%AID%_UP-%TT%%CC%064" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%065_R-%TT%%CC%06501" RefId="%AID%_UP-%TT%%CC%065" />
+              <ParameterRef Id="%AID%_UP-%TT%%CC%066_R-%TT%%CC%06601" RefId="%AID%_UP-%TT%%CC%066" />
               <op:usePart name="SCENE" xpath="//Static/ParameterRefs/*" instanceFrom="1" instanceTo="12" />
             </ParameterRefs>
             <ComObjectTable>
@@ -211,9 +217,10 @@
               <ComObject Id="%AID%_O-%TT%%CC%017" Name="Ch%C%TargetTempLockCooling" Number="%K16%" ObjectSize="1 Bit" Text="" FunctionText="Sperren Sollwert Kühlen" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
               <ComObject Id="%AID%_O-%TT%%CC%018" Name="Ch%C%TargetTempLockCoolingStatus" Number="%K17%" ObjectSize="1 Bit" Text="" FunctionText="Sperrstatus Sollwert Kühlen" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
               <ComObject Id="%AID%_O-%TT%%CC%019" Name="Ch%C%EnforcedPosition" Number="%K18%" ObjectSize="1 Bit" Text="" FunctionText="Zwangsstellung" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%%CC%020" Name="Ch%C%ManualMode" Number="%K19%" ObjectSize="1 Bit" Text="" FunctionText="Manueller Modus (0=inaktiv/auto, 1=aktiv/manuell)" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%%CC%021" Name="Ch%C%ManualModeStatus" Number="%K20%" ObjectSize="1 Bit" Text="" FunctionText="Status manueller Modus (0=inaktiv/auto, 1=aktiv/manuell)" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%%CC%022" Name="Ch%C%Scene" Number="%K21%" ObjectSize="1 Byte" Text="" FunctionText="Szene" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-18-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%020" Name="Ch%C%EmergencyModeStatus" Number="%K19%" ObjectSize="1 Bit" Text="" FunctionText="Status Notbetrieb (0=inaktiv/auto, 1=aktiv/manuell)" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%021" Name="Ch%C%ManualMode" Number="%K20%" ObjectSize="1 Bit" Text="" FunctionText="Manueller Modus (0=inaktiv/auto, 1=aktiv/manuell)" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%022" Name="Ch%C%ManualModeStatus" Number="%K21%" ObjectSize="1 Bit" Text="" FunctionText="Status manueller Modus (0=inaktiv/auto, 1=aktiv/manuell)" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%%CC%023" Name="Ch%C%Scene" Number="%K22%" ObjectSize="1 Byte" Text="" FunctionText="Szene" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-18-1" />
             </ComObjectTable>
             <ComObjectRefs>
               <ComObjectRef Id="%AID%_O-%TT%%CC%001_R-%TT%%CC%00101" RefId="%AID%_O-%TT%%CC%001" Text="Kanal %Z%: {{0:}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
@@ -239,6 +246,7 @@
               <ComObjectRef Id="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" RefId="%AID%_O-%TT%%CC%020" Text="Kanal %Z%: {{0:}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
               <ComObjectRef Id="%AID%_O-%TT%%CC%021_R-%TT%%CC%02101" RefId="%AID%_O-%TT%%CC%021" Text="Kanal %Z%: {{0:}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
               <ComObjectRef Id="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" RefId="%AID%_O-%TT%%CC%022" Text="Kanal %Z%: {{0:}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
+              <ComObjectRef Id="%AID%_O-%TT%%CC%023_R-%TT%%CC%02301" RefId="%AID%_O-%TT%%CC%023" Text="Kanal %Z%: {{0:}}" TextParameterRefId="%AID%_P-%TT%%CC%001_R-%TT%%CC%00101" />
             </ComObjectRefs>
           </Static>
           <Dynamic>
@@ -430,7 +438,7 @@
                                   <ParameterRefRef RefId="%AID%_UP-%TT%%CC%047_R-%TT%%CC%04701" Cell="1,4" />
                                 </ParameterBlock>
 
-                                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%021_R-%TT%%CC%02101" />
+                                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" />
                               </when>
                             </choose>
 
@@ -455,7 +463,7 @@
                               </when>
                             </choose>
 
-                            <ComObjectRefRef RefId="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" />
+                            <ComObjectRefRef RefId="%AID%_O-%TT%%CC%021_R-%TT%%CC%02101" />
                           </when>
                         </choose>
 
@@ -492,6 +500,29 @@
                                     <ParameterRefRef RefId="%AID%_UP-%TT%%CC%032_R-%TT%%CC%03201" IndentLevel="1" />
                                   </when>
                                 </choose>
+                              </when>
+                            </choose>
+
+                            <ParameterRefRef RefId="%AID%_UP-%TT%%CC%064_R-%TT%%CC%06401" IndentLevel="1" />
+                            <choose ParamRefId="%AID%_UP-%TT%%CC%064_R-%TT%%CC%06401">
+                              <when test="1">
+                                <!-- Status Cyclic pattern -->
+                                <ParameterBlock Id="%AID%_PB-nnn" Name="EmergencyModeCyclic" Inline="true" Layout="Grid">
+                                  <Rows>
+                                    <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                                  </Rows>
+                                  <Columns>
+                                    <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="1%" />
+                                    <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="44%" />
+                                    <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="15%" />
+                                    <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="20%" />
+                                  </Columns>
+                                  <ParameterSeparator Id="%AID%_PS-nnn" Text=" Notbetrieb zyklisch senden&#10; (0 = nicht senden)" Cell="1,2" />
+                                  <ParameterRefRef RefId="%AID%_UP-%TT%%CC%066_R-%TT%%CC%06601" Cell="1,3" />
+                                  <ParameterRefRef RefId="%AID%_UP-%TT%%CC%065_R-%TT%%CC%06501" Cell="1,4" />
+                                </ParameterBlock>
+
+                                <ComObjectRefRef RefId="%AID%_O-%TT%%CC%020_R-%TT%%CC%02001" />
                               </when>
                             </choose>
                           </when>
@@ -585,7 +616,7 @@
                                 <ParameterBlock Id="%AID%_PB-nnn" Text="Szenen" Icon="movie-open-outline">
                                   <op:usePart name="SCENE" xpath="//Dynamic/ChannelIndependentBlock/ParameterBlock[@Name='SzenePart']/*" instanceFrom="1" instanceTo="12" />
 
-                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%022_R-%TT%%CC%02201" />
+                                  <ComObjectRefRef RefId="%AID%_O-%TT%%CC%023_R-%TT%%CC%02301" />
                                 </ParameterBlock>
                               </when>
                             </choose>
