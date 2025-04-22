@@ -78,7 +78,7 @@
               <Union SizeInBit="56">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="26" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%051" Name="Ch%C%EmergencyMode" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Notbetrieb aktivieren" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%064" Name="Ch%C%EmergencyModeChangeSend" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="1" Text="Manueller Betrieb senden" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%064" Name="Ch%C%EmergencyModeChangeSend" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="1" Text="Notbetrieb senden" Value="0" />
                 <!-- 6 bits free -->
                 <Parameter Id="%AID%_UP-%TT%%CC%029" Name="Ch%C%EmergencyModeDelayBase" ParameterType="%AID%_PT-DelayBase" Offset="1" BitOffset="0" Text="Zeitbasis" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%%CC%030" Name="Ch%C%EmergencyModeDelayTime" ParameterType="%AID%_PT-DelayTime" Offset="1" BitOffset="2" Text="Zeit" Value="30" />
@@ -89,8 +89,8 @@
               </Union>
               <Union SizeInBit="56">
                 <Memory CodeSegment="%AID%_RS-04-00000" Offset="33" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%042" Name="Ch%C%ManualMode" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Manueller Betrieb aktivieren" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%%CC%043" Name="Ch%C%ManualModeChangeSend" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="1" Text="Manueller Betrieb senden" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%042" Name="Ch%C%ManualMode" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="0" Text="Manueller Modus aktivieren" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%%CC%043" Name="Ch%C%ManualModeChangeSend" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="1" Text="Manueller Modus senden" Value="0" />
                 <!-- 4 bits free -->
                 <Parameter Id="%AID%_UP-%TT%%CC%044" Name="Ch%C%ManualModeChangeToAuto" ParameterType="%AID%_PT-ManualModeChangeToAuto" Offset="0" BitOffset="6" Text="Umschaltung auf Automatik" Value="2" />
                 <Parameter Id="%AID%_UP-%TT%%CC%045" Name="Ch%C%ManualModeSetValueOff" ParameterType="%AID%_PT-Percent" Offset="1" BitOffset="0" Text="Stellwert bei Aus" Value="0" SuffixText="%" />
@@ -412,7 +412,7 @@
                           </when>
                         </choose>
 
-                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Manueller Betrieb" UIHint="Headline" />
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Manueller Modus" UIHint="Headline" />
                         <ParameterRefRef RefId="%AID%_UP-%TT%%CC%042_R-%TT%%CC%04201" IndentLevel="1" />
                         <choose ParamRefId="%AID%_UP-%TT%%CC%042_R-%TT%%CC%04201">
                           <when test="1">
