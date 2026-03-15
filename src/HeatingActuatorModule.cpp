@@ -101,7 +101,7 @@ void HeatingActuatorModule::setup(bool configured)
     }
 }
 
-void HeatingActuatorModule::loop()
+void HeatingActuatorModule::loop(bool configured)
 {
     if (_motorPower)
     {
@@ -129,6 +129,9 @@ void HeatingActuatorModule::loop()
             }
         }
     }
+
+    if (!configured)
+        return;
 
     for (uint8_t i = 0; i < MIN(ParamHTA_VisibleChannels, OPENKNX_HTA_CHANNEL_COUNT); i++)
         _channel[i]->loop(_motorPower, _currentCount, _currentAvg, _currentAvgLast);
