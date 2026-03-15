@@ -43,10 +43,10 @@ void HeatingActuatorModule::setup(bool configured)
 #ifdef OPENKNX_GPIO_NUM
     for (uint8_t i = 0; i < OPENKNX_HTA_CHANNEL_COUNT; i++)
     {
-        openknxGPIOModule.pinMode(0x0100 + i, OUTPUT);
-        openknxGPIOModule.digitalWrite(0x0100 + i, LOW);
+        openknx.gpio.pinMode(0x0100 + i, OUTPUT);
+        openknx.gpio.digitalWrite(0x0100 + i, LOW);
 
-        openknxGPIOModule.pinMode(0x0200 + i, INPUT);
+        openknx.gpio.pinMode(0x0200 + i, INPUT);
     }
 #else
     // Wire is initialized by GPIO module, when used
