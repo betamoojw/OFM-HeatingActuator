@@ -6,7 +6,7 @@
       <ApplicationPrograms>
         <ApplicationProgram Id="%AID%" ProgramType="ApplicationProgram" MaskVersion="MV-07B0" Name="SWT" LoadProcedureStyle="MergedProcedure" PeiType="0" DefaultLanguage="de" DynamicTableManagement="false" Linkable="true" MinEtsVersion="4.0" ApplicationNumber="0" ApplicationVersion="0" ReplacesVersions="0">
           <op:part href="HeatingActuatorModule.parts.xml" name="SCENE" instances="12">
-            <op:param name="%ParamOffset%" value="57" increment="3" />
+            <op:param name="%ParamOffset%" value="59" increment="3" />
             <op:param name="%Sl%" value="0" asLetter="true" increment="1" />
             <op:param name="%PPP%" value="70" increment="8" digits="3" />
           </op:part>
